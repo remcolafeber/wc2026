@@ -540,6 +540,14 @@ async function adminClearResult(mid){
   }catch(e){}
   renderPool();
 }
+async function adminDeleteEntry(id,name){
+  if(!confirm('Supprimer le prono de "'+name+'" ? Cette action est définitive.'))return;
+  try{
+    await fetch(SB_URL+'/rest/v1/brackets?id=eq.'+id,{method:'DELETE',headers:SB_HEAD});
+    if(id===myEntryId){myEntryId=null;localStorage.removeItem('wc2026_entry_id');}
+    await poolFetch();renderPool();
+  }catch(e){alert('Échec de la suppression — vérifiez votre connexion.');}
+}
 
 // view another person's bracket read-only by loading into the bracket tab
 function viewEntry(id){
@@ -600,6 +608,7 @@ function renderPool(){
         ${hasResults?`<span class="lb-rank ${i<3?'top':''}">${i+1}</span>`:`<span class="lb-rank">•</span>`}
         <span class="lb-name">${e.name}${isMe?' <span class="you-badge">VOUS</span>':''}</span>
         ${hasResults?`<span style="text-align:right"><div class="lb-pts">${e.pts}</div><div class="lb-pts-lbl">pts</div></span>`:`<span style="font-size:11px;color:#666">toucher pour voir ›</span>`}
+        ${isAdmin?`<button onclick="event.stopPropagation();adminDeleteEntry('${e.id}','${(e.name||'').replace(/'/g,"\\'")}')" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer;margin-left:4px">✕</button>`:''}
       </div>`;
     });
   }
