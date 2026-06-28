@@ -26,8 +26,10 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .tab{flex:1;font-size:13px;padding:7px 0;border:none;background:transparent;color:#888;cursor:pointer;border-bottom:2px solid transparent}
 .tab.active{color:#fff;border-bottom-color:#3b82f6;font-weight:500}
 .bracket-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px}
-.bracket{display:flex;gap:4px;align-items:flex-start;min-width:1100px;padding:0 4px}
+.bracket{display:flex;gap:4px;align-items:stretch;min-width:1100px;padding:0 4px}
 .round{display:flex;flex-direction:column;min-width:110px}
+.matches.stretch{display:flex;flex-direction:column;flex:1}
+.slot{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:60px}
 .round-label{font-size:9px;font-weight:600;color:#666;text-align:center;padding:3px 0 6px;text-transform:uppercase;letter-spacing:.06em}
 .match-wrap{display:flex;flex-direction:column;gap:1px}
 .match-info{font-size:8px;color:#555;text-align:center;margin-bottom:1px;line-height:1.3}
@@ -42,7 +44,7 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .flag{font-size:13px;flex-shrink:0;line-height:1}
 .tname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lk{font-size:9px;flex-shrink:0}
-.center-col{display:flex;flex-direction:column;align-items:center;min-width:130px;gap:6px;padding:0 4px;padding-top:190px}
+.center-col{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:130px;gap:6px;padding:0 4px}
 .final-lbl{font-size:9px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;text-align:center}
 .champ-box{border:1.5px solid #2563eb;border-radius:10px;padding:8px 10px;min-width:100px;text-align:center}
 .champ-flag{font-size:22px;margin-bottom:2px}
@@ -115,6 +117,26 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .scorer-goals{font-size:16px;font-weight:700;color:#fbbf24}
 .adv-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;background:#14432a;color:#6ee7b7}
 .elim-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;background:#3b1010;color:#f87171}
+/* POOL */
+.pool-box{background:#1c1f2a;border:1px solid #2a2d3a;border-radius:10px;padding:12px;margin-bottom:12px}
+.pool-box h3{font-size:13px;font-weight:600;margin-bottom:8px;color:#fff}
+.pool-input{width:100%;font-size:14px;padding:9px 11px;border:1px solid #2a2d3a;border-radius:8px;background:#0f1117;color:#e8eaf0;margin-bottom:8px}
+.pool-input:focus{outline:none;border-color:#3b82f6}
+.pool-btn{width:100%;font-size:14px;font-weight:600;padding:10px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer}
+.pool-btn:active{opacity:.8}
+.pool-btn:disabled{opacity:.4;cursor:default}
+.pool-btn.secondary{background:#252836;color:#ccc;border:1px solid #2a2d3a}
+.pool-msg{font-size:12px;text-align:center;margin-top:8px;min-height:16px}
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #2a2d3a;border-radius:8px;background:#1c1f2a;margin-bottom:6px;cursor:pointer}
+.lb-row:active{background:#252836}
+.lb-rank{font-size:15px;font-weight:700;color:#888;min-width:26px;text-align:center}
+.lb-rank.top{color:#fbbf24}
+.lb-name{flex:1;font-size:14px;font-weight:500}
+.lb-pts{font-size:15px;font-weight:700;color:#6ee7b7}
+.lb-pts-lbl{font-size:9px;color:#666;text-transform:uppercase}
+.pool-empty{text-align:center;color:#666;font-size:13px;padding:18px}
+.admin-banner{background:#3d2410;border:1px solid #92560f;border-radius:8px;padding:8px 11px;margin-bottom:12px;font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:6px}
+.you-badge{font-size:9px;padding:1px 6px;border-radius:4px;background:#1e3a5f;color:#93c5fd;font-weight:600}
 </style>
 </head>
 <body>
@@ -130,10 +152,12 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
   <button class="tab active" onclick="switchTab('bracket',this)">Bracket</button>
   <button class="tab" onclick="switchTab('schedule',this)">Schedule</button>
   <button class="tab" onclick="switchTab('groups',this)">Groups</button>
+  <button class="tab" onclick="switchTab('pool',this)">Pool</button>
 </div>
 <div id="tab-bracket"><div class="bracket-outer"><div class="bracket" id="bracket"></div></div></div>
 <div id="tab-schedule" style="display:none"><div class="schedule" id="schedule"></div></div>
 <div id="tab-groups" style="display:none"><div style="padding:0 2px" id="groups"></div></div>
+<div id="tab-pool" style="display:none"><div style="padding:0 2px" id="pool"></div></div>
 <div class="dp" id="dp">
   <div class="dp-hdr">
     <button class="dp-back" onclick="closeDetail()">← Back</button>
@@ -294,6 +318,19 @@ const KO=[
 ];
 const RL={R32:"R32",R16:"R16",QF:"QF",SF:"SF","3P":"3rd","F":"Final"};
 let picks={},locked={},history=[],isLocked=false,odds={};
+// ── SUPABASE POOL CONFIG ──
+const SB_URL='https://wfgzivwzphkgmhmtjhga.supabase.co';
+const SB_KEY='sb_publishable_8136FD8fJlRnmwkfts1xeA_grUJ3EsT';
+const SB_HEAD={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+const ADMIN_CODE='Wc26*Redstack!';  // open site with ?admin=Wc26*Redstack! to enter results
+let isAdmin=new URLSearchParams(location.search).get('admin')===ADMIN_CODE;
+let myName=localStorage.getItem('wc2026_name')||'';
+let myEntryId=localStorage.getItem('wc2026_entry_id')||null;
+let poolEntries=[];      // all brackets from supabase
+let actualResults={};    // real match outcomes (admin-entered)
+let viewingEntry=null;   // when viewing someone else's bracket read-only
+// round-weighted scoring
+const PTS={R32:1,R16:2,QF:4,SF:6,'3P':3,F:10};
 const SAVE_KEY='wc2026_state';
 function save(){
   try{localStorage.setItem(SAVE_KEY,JSON.stringify({picks,locked,isLocked,odds}));}catch(e){}
@@ -357,12 +394,19 @@ function renderBracket(){
   const lR32=["W74","W77","W73","W75","W83","W84","W81","W82"],lR16=["W89","W90","W93","W94"],lQF=["W97","W98"];
   const rR32=["W78","W78b","W79","W80","W86","W88","W85","W87"],rR16=["W91","W92","W95","W96"],rQF=["W99","W100"];
   const champ=getW('FINAL');
-  function col(lbl,ids,pt,gap){return `<div class="round"><div class="round-label">${lbl}</div><div class="matches" style="display:flex;flex-direction:column;gap:${gap}px;padding-top:${pt}px">${ids.map(id=>mcard(id)).join('')}</div></div>`;}
-  let h=col('Rd 32',lR32,0,6)+col('Rd 16',lR16,28,28)+col('QF',lQF,88,88);
-  h+=`<div class="round"><div class="round-label">SF</div><div class="matches" style="padding-top:200px">${mcard('W101')}</div></div>`;
+  // Each round's column holds the same total height; each match sits in an
+  // equal-height "slot" with its content vertically centered. Because a parent
+  // round has half as many slots over the same height, each match auto-centers
+  // against the pair that feeds it.
+  function col(lbl,ids){
+    const slots=ids.map(id=>`<div class="slot">${mcard(id)}</div>`).join('');
+    return `<div class="round"><div class="round-label">${lbl}</div><div class="matches stretch">${slots}</div></div>`;
+  }
+  let h=col('Rd 32',lR32)+col('Rd 16',lR16)+col('QF',lQF);
+  h+=`<div class="round"><div class="round-label">SF</div><div class="matches stretch"><div class="slot">${mcard('W101')}</div></div></div>`;
   h+=`<div class="center-col"><div class="final-lbl">🏆 Final<br>Sun 19 Jul · 21:00 CET<br>MetLife Stadium</div><div class="match">${tEl('FINAL','t1')}${tEl('FINAL','t2')}</div><div class="champ-box" style="${champ?'':'opacity:.3'}"><div class="champ-flag">${champ?champ.f:'🏆'}</div><div class="champ-name">${champ?champ.n:'Champion'}</div></div><div style="margin-top:8px;border-top:1px solid #2a2d3a;padding-top:8px;width:100%;text-align:center"><div class="final-lbl">3rd Place · Sat 18 Jul · 23:00 CET</div><div class="match" style="margin:4px auto 0;width:108px">${tEl('L101','t1')}${tEl('L101','t2')}</div></div></div>`;
-  h+=`<div class="round"><div class="round-label">SF</div><div class="matches" style="padding-top:200px">${mcard('W102')}</div></div>`;
-  h+=col('QF',rQF,88,88)+col('Rd 16',rR16,28,28)+col('Rd 32',rR32,0,6);
+  h+=`<div class="round"><div class="round-label">SF</div><div class="matches stretch"><div class="slot">${mcard('W102')}</div></div></div>`;
+  h+=col('QF',rQF)+col('Rd 16',rR16)+col('Rd 32',rR32);
   document.getElementById('bracket').innerHTML=h;
 }
 function renderSchedule(){
@@ -430,24 +474,177 @@ function openDetail(code){
   const panel=document.getElementById('dp');panel.classList.add('open');panel.scrollTop=0;
 }
 function closeDetail(){document.getElementById('dp').classList.remove('open');}
-let builtTabs={bracket:false,schedule:false,groups:false};
+
+// ── POOL: data sync ──
+async function poolFetch(){
+  try{
+    const [bRes,rRes]=await Promise.all([
+      fetch(SB_URL+'/rest/v1/brackets?select=*&order=created_at.asc',{headers:SB_HEAD}),
+      fetch(SB_URL+'/rest/v1/results?id=eq.1&select=picks',{headers:SB_HEAD})
+    ]);
+    poolEntries=await bRes.json();
+    const rJson=await rRes.json();
+    actualResults=(rJson[0]&&rJson[0].picks)||{};
+  }catch(e){poolEntries=[];actualResults={};}
+}
+async function poolSubmit(){
+  const nameEl=document.getElementById('pool-name');
+  const name=(nameEl.value||'').trim();
+  const msg=document.getElementById('pool-submit-msg');
+  if(!name){msg.style.color='#f87171';msg.textContent='Please enter your name.';return;}
+  myName=name;localStorage.setItem('wc2026_name',name);
+  msg.style.color='#888';msg.textContent='Saving…';
+  const body=JSON.stringify({name:name,picks:picks,updated_at:new Date().toISOString()});
+  try{
+    let res;
+    if(myEntryId){
+      res=await fetch(SB_URL+'/rest/v1/brackets?id=eq.'+myEntryId,{method:'PATCH',headers:{...SB_HEAD,'Prefer':'return=representation'},body});
+    }else{
+      res=await fetch(SB_URL+'/rest/v1/brackets',{method:'POST',headers:{...SB_HEAD,'Prefer':'return=representation'},body});
+    }
+    const j=await res.json();
+    if(j&&j[0]&&j[0].id){myEntryId=j[0].id;localStorage.setItem('wc2026_entry_id',myEntryId);}
+    msg.style.color='#6ee7b7';msg.textContent='✓ Bracket submitted to the pool!';
+    await poolFetch();renderPool();
+  }catch(e){msg.style.color='#f87171';msg.textContent='Could not save — check your connection.';}
+}
+// score a picks object against actualResults
+function scoreEntry(entryPicks){
+  let pts=0;
+  KO.forEach(m=>{
+    const actual=actualResults[m.id];   // 1 or 2
+    if(!actual)return;
+    if(entryPicks[m.id]===actual)pts+=(PTS[m.r]||1);
+  });
+  return pts;
+}
+function resultsCount(){return Object.keys(actualResults).length;}
+
+// ── POOL: admin results entry ──
+async function adminSetResult(mid,slot){
+  actualResults[mid]=(slot==='t1'?1:2);
+  try{
+    await fetch(SB_URL+'/rest/v1/results?id=eq.1',{method:'PATCH',headers:SB_HEAD,
+      body:JSON.stringify({picks:actualResults,updated_at:new Date().toISOString()})});
+  }catch(e){}
+  renderPool();
+}
+async function adminClearResult(mid){
+  delete actualResults[mid];
+  try{
+    await fetch(SB_URL+'/rest/v1/results?id=eq.1',{method:'PATCH',headers:SB_HEAD,
+      body:JSON.stringify({picks:actualResults,updated_at:new Date().toISOString()})});
+  }catch(e){}
+  renderPool();
+}
+
+// view another person's bracket read-only by loading into the bracket tab
+function viewEntry(id){
+  const e=poolEntries.find(x=>x.id===id);if(!e)return;
+  viewingEntry=e;
+  // swap to bracket tab showing their picks; stash mine
+  switchToBracketViewing(e);
+}
+function switchToBracketViewing(e){
+  // temporarily render bracket with their picks
+  const savedPicks=picks;
+  picks=e.picks||{};
+  renderBracket();
+  picks=savedPicks;
+  // show a banner + go to bracket tab
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  ['bracket','schedule','groups','pool'].forEach(t=>{document.getElementById('tab-'+t).style.display=t==='bracket'?'':'none';});
+  currentTab='bracket';
+  const br=document.getElementById('bracket');
+  const banner=document.createElement('div');
+  banner.style.cssText='background:#1e3a5f;border:1px solid #2563eb;border-radius:8px;padding:8px 11px;margin-bottom:10px;font-size:12px;color:#93c5fd;display:flex;justify-content:space-between;align-items:center';
+  banner.innerHTML=`<span>👁 Viewing <b>${e.name}</b>'s bracket (read-only)</span><button onclick="exitViewing()" style="font-size:11px;padding:3px 10px;border:1px solid #2563eb;border-radius:6px;background:transparent;color:#93c5fd;cursor:pointer">Back to mine</button>`;
+  br.parentElement.insertBefore(banner,br);
+}
+function exitViewing(){
+  viewingEntry=null;
+  const br=document.getElementById('bracket');
+  if(br.previousElementSibling&&br.previousElementSibling.textContent.includes('Viewing'))br.previousElementSibling.remove();
+  renderBracket();
+}
+
+// ── POOL: render ──
+function renderPool(){
+  const el=document.getElementById('pool');
+  let h='';
+  if(isAdmin){
+    h+=`<div class="admin-banner"><span>🔑</span><span>Admin mode — tap the real winner of each match below to enter results. ${resultsCount()} entered.</span></div>`;
+  }
+  // submit box
+  h+=`<div class="pool-box"><h3>${myEntryId?'Update your entry':'Join the pool'}</h3>
+    <input class="pool-input" id="pool-name" placeholder="Your name" value="${myName.replace(/"/g,'&quot;')}">
+    <button class="pool-btn" onclick="poolSubmit()">${myEntryId?'Update my bracket':'Submit my bracket'}</button>
+    <div class="pool-msg" id="pool-submit-msg"></div>
+    <div style="font-size:11px;color:#666;text-align:center;margin-top:4px">Fill the Bracket tab first, then submit here. You can re-submit to update.</div>
+  </div>`;
+  // leaderboard
+  const hasResults=resultsCount()>0;
+  h+=`<div class="pool-box"><h3>${hasResults?'🏆 Leaderboard':'Pool entries'} (${poolEntries.length})</h3>`;
+  if(!poolEntries.length){
+    h+=`<div class="pool-empty">No entries yet. Be the first to submit!</div>`;
+  }else{
+    const ranked=poolEntries.map(e=>({...e,pts:scoreEntry(e.picks||{})}))
+      .sort((a,b)=>hasResults?(b.pts-a.pts):0);
+    ranked.forEach((e,i)=>{
+      const isMe=e.id===myEntryId;
+      h+=`<div class="lb-row" onclick="viewEntry('${e.id}')">
+        ${hasResults?`<span class="lb-rank ${i<3?'top':''}">${i+1}</span>`:`<span class="lb-rank">•</span>`}
+        <span class="lb-name">${e.name}${isMe?' <span class="you-badge">YOU</span>':''}</span>
+        ${hasResults?`<span style="text-align:right"><div class="lb-pts">${e.pts}</div><div class="lb-pts-lbl">pts</div></span>`:`<span style="font-size:11px;color:#666">tap to view ›</span>`}
+      </div>`;
+    });
+  }
+  h+=`</div>`;
+  // admin results entry panel
+  if(isAdmin){
+    h+=`<div class="pool-box"><h3>Enter actual results</h3>`;
+    KO.forEach(m=>{
+      const t1=rt(m,'t1'),t2=rt(m,'t2');
+      if(!t1||!t2){h+=`<div style="font-size:11px;color:#444;padding:4px 0">${RL[m.r]} · ${m.date} — teams TBD</div>`;return;}
+      const a=actualResults[m.id];
+      h+=`<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #1e2130">
+        <span style="font-size:9px;color:#666;min-width:34px">${RL[m.r]}</span>
+        <button onclick="adminSetResult('${m.id}','t1')" style="flex:1;font-size:11px;padding:5px;border-radius:6px;cursor:pointer;border:1px solid ${a===1?'#22c55e':'#2a2d3a'};background:${a===1?'#14432a':'#1c1f2a'};color:${a===1?'#6ee7b7':'#ccc'}">${t1.f} ${t1.n}</button>
+        <button onclick="adminSetResult('${m.id}','t2')" style="flex:1;font-size:11px;padding:5px;border-radius:6px;cursor:pointer;border:1px solid ${a===2?'#22c55e':'#2a2d3a'};background:${a===2?'#14432a':'#1c1f2a'};color:${a===2?'#6ee7b7':'#ccc'}">${t2.f} ${t2.n}</button>
+        ${a?`<button onclick="adminClearResult('${m.id}')" style="font-size:10px;padding:5px 7px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer">✕</button>`:''}
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  el.innerHTML=h;
+}
+async function buildPool(){
+  document.getElementById('pool').innerHTML='<div class="pool-empty">Loading pool…</div>';
+  await poolFetch();
+  renderPool();
+}
+
+let builtTabs={bracket:false,schedule:false,groups:false,pool:false};
 let currentTab='bracket';
 function buildTab(name){
   if(name==='bracket')renderBracket();
   else if(name==='schedule')renderSchedule();
   else if(name==='groups')renderGroups();
+  else if(name==='pool')buildPool();
   builtTabs[name]=true;
 }
 function switchTab(name,el){
   currentTab=name;
-  ['bracket','schedule','groups'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===name?'':'none';});
+  ['bracket','schedule','groups','pool'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===name?'':'none';});
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   if(!builtTabs[name])buildTab(name);
+  else if(name==='pool')buildPool();
 }
 function render(){
   // only (re)build tabs that have already been viewed; visible tab always built
   if(!builtTabs[currentTab])buildTab(currentTab);
-  if(builtTabs.bracket)renderBracket();
+  if(builtTabs.bracket&&!viewingEntry)renderBracket();
   if(builtTabs.schedule)renderSchedule();
   if(builtTabs.groups)renderGroups();
   document.getElementById('btn-undo').disabled=history.length===0;
