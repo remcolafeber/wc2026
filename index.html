@@ -137,22 +137,25 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .pool-empty{text-align:center;color:#666;font-size:13px;padding:18px}
 .admin-banner{background:#3d2410;border:1px solid #92560f;border-radius:8px;padding:8px 11px;margin-bottom:12px;font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:6px}
 .you-badge{font-size:9px;padding:1px 6px;border-radius:4px;background:#1e3a5f;color:#93c5fd;font-weight:600}
+.cta-pronos{display:block;width:100%;max-width:420px;margin:0 auto 10px;font-size:15px;font-weight:700;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+.cta-pronos:active{opacity:.85}
 </style>
 </head>
 <body>
 <h1>⚽ World Cup 2026</h1>
-<p class="sub">Tap team in bracket to pick winner · Tap country in Groups to drill down · Times CET</p>
+<p class="sub">Touchez une équipe pour choisir le vainqueur · Touchez un pays dans Groupes pour le détail · Heures CET</p>
+<button class="cta-pronos" onclick="goPronos()">📋 Soumettre mon pronostic</button>
 <div class="toolbar">
-  <button id="btn-undo" onclick="undo()" disabled>↩ Undo</button>
-  <button id="btn-lock" onclick="toggleLock()">🔓 Lock choices</button>
-  <button id="btn-reset" class="danger" onclick="confirmReset()">↺ Reset</button>
+  <button id="btn-undo" onclick="undo()" disabled>↩ Annuler</button>
+  <button id="btn-lock" onclick="toggleLock()">🔓 Verrouiller</button>
+  <button id="btn-reset" class="danger" onclick="confirmReset()">↺ Réinitialiser</button>
 </div>
 <div class="status" id="status-bar"></div>
 <div class="tab-bar">
-  <button class="tab active" onclick="switchTab('bracket',this)">Bracket</button>
-  <button class="tab" onclick="switchTab('schedule',this)">Schedule</button>
-  <button class="tab" onclick="switchTab('groups',this)">Groups</button>
-  <button class="tab" onclick="switchTab('pool',this)">Pool</button>
+  <button class="tab active" onclick="switchTab('bracket',this)">Tableau</button>
+  <button class="tab" onclick="switchTab('schedule',this)">Calendrier</button>
+  <button class="tab" onclick="switchTab('groups',this)">Groupes</button>
+  <button class="tab" onclick="switchTab('pool',this)">Pronos</button>
 </div>
 <div id="tab-bracket"><div class="bracket-outer"><div class="bracket" id="bracket"></div></div></div>
 <div id="tab-schedule" style="display:none"><div class="schedule" id="schedule"></div></div>
@@ -316,7 +319,7 @@ const KO=[
   {id:"L101",r:"3P",p1:"L_W101",p2:"L_W102",date:"Sat 18 Jul",cet:"23:00",venue:"Miami",sk:"202607182300"},
   {id:"FINAL",r:"F",p1:"W101",p2:"W102",date:"Sun 19 Jul",cet:"21:00",venue:"MetLife Stadium",sk:"202607192100"},
 ];
-const RL={R32:"R32",R16:"R16",QF:"QF",SF:"SF","3P":"3rd","F":"Final"};
+const RL={R32:"32e",R16:"8e",QF:"1/4",SF:"1/2","3P":"3e place","F":"Finale"};
 let picks={},locked={},history=[],isLocked=false,odds={};
 // ── SUPABASE POOL CONFIG ──
 const SB_URL='https://wfgzivwzphkgmhmtjhga.supabase.co';
@@ -372,7 +375,7 @@ function cascade(cid){KO.forEach(m=>{if((m.p1===cid||m.p2===cid)&&picks[m.id]){c
 function undo(){if(!history.length)return;picks=history.pop();save();render();}
 function toggleLock(){isLocked=!isLocked;locked=isLocked?JSON.parse(JSON.stringify(picks)):{};save();render();}
 function confirmReset(){
-  if(isLocked){document.getElementById('status-bar').innerHTML='<span style="color:#f87171">Locked picks preserved. Clear unlocked? <button onclick="doReset()" style="margin-left:6px;font-size:11px;padding:2px 8px;border:1px solid #7f2020;border-radius:6px;background:transparent;color:#f87171;cursor:pointer">Yes</button> <button onclick="render()" style="margin-left:4px;font-size:11px;padding:2px 8px;border:1px solid #333;border-radius:6px;background:transparent;color:#aaa;cursor:pointer">No</button></span>';return;}
+  if(isLocked){document.getElementById('status-bar').innerHTML='<span style="color:#f87171">Choix verrouillés conservés. Effacer les autres ? <button onclick="doReset()" style="margin-left:6px;font-size:11px;padding:2px 8px;border:1px solid #7f2020;border-radius:6px;background:transparent;color:#f87171;cursor:pointer">Oui</button> <button onclick="render()" style="margin-left:4px;font-size:11px;padding:2px 8px;border:1px solid #333;border-radius:6px;background:transparent;color:#aaa;cursor:pointer">Non</button></span>';return;}
   doReset();
 }
 function doReset(){
@@ -402,19 +405,19 @@ function renderBracket(){
     const slots=ids.map(id=>`<div class="slot">${mcard(id)}</div>`).join('');
     return `<div class="round"><div class="round-label">${lbl}</div><div class="matches stretch">${slots}</div></div>`;
   }
-  let h=col('Rd 32',lR32)+col('Rd 16',lR16)+col('QF',lQF);
-  h+=`<div class="round"><div class="round-label">SF</div><div class="matches stretch"><div class="slot">${mcard('W101')}</div></div></div>`;
-  h+=`<div class="center-col"><div class="final-lbl">🏆 Final<br>Sun 19 Jul · 21:00 CET<br>MetLife Stadium</div><div class="match">${tEl('FINAL','t1')}${tEl('FINAL','t2')}</div><div class="champ-box" style="${champ?'':'opacity:.3'}"><div class="champ-flag">${champ?champ.f:'🏆'}</div><div class="champ-name">${champ?champ.n:'Champion'}</div></div><div style="margin-top:8px;border-top:1px solid #2a2d3a;padding-top:8px;width:100%;text-align:center"><div class="final-lbl">3rd Place · Sat 18 Jul · 23:00 CET</div><div class="match" style="margin:4px auto 0;width:108px">${tEl('L101','t1')}${tEl('L101','t2')}</div></div></div>`;
-  h+=`<div class="round"><div class="round-label">SF</div><div class="matches stretch"><div class="slot">${mcard('W102')}</div></div></div>`;
-  h+=col('QF',rQF)+col('Rd 16',rR16)+col('Rd 32',rR32);
+  let h=col('32es',lR32)+col('8es',lR16)+col('Quarts',lQF);
+  h+=`<div class="round"><div class="round-label">Demi</div><div class="matches stretch"><div class="slot">${mcard('W101')}</div></div></div>`;
+  h+=`<div class="center-col"><div class="final-lbl">🏆 Finale<br>Dim 19 juil · 21:00 CET<br>MetLife Stadium</div><div class="match">${tEl('FINAL','t1')}${tEl('FINAL','t2')}</div><div class="champ-box" style="${champ?'':'opacity:.3'}"><div class="champ-flag">${champ?champ.f:'🏆'}</div><div class="champ-name">${champ?champ.n:'Champion'}</div></div><div style="margin-top:8px;border-top:1px solid #2a2d3a;padding-top:8px;width:100%;text-align:center"><div class="final-lbl">3e place · Sam 18 juil · 23:00 CET</div><div class="match" style="margin:4px auto 0;width:108px">${tEl('L101','t1')}${tEl('L101','t2')}</div></div></div>`;
+  h+=`<div class="round"><div class="round-label">Demi</div><div class="matches stretch"><div class="slot">${mcard('W102')}</div></div></div>`;
+  h+=col('Quarts',rQF)+col('8es',rR16)+col('32es',rR32);
   document.getElementById('bracket').innerHTML=h;
 }
 function renderSchedule(){
   const sorted=[...KO].sort((a,b)=>a.sk.localeCompare(b.sk));
   const byDay={};sorted.forEach(m=>{if(!byDay[m.date])byDay[m.date]=[];byDay[m.date].push(m);});
-  let h='<div class="odds-hint">💡 Enter Betfirst odds below: <b>1</b> = home win · <b>X</b> = draw · <b>2</b> = away win. They save with your bracket and show on each match.</div>';
+  let h='<div class="odds-hint">💡 Saisissez les cotes Betfirst : <b>1</b> = victoire dom. · <b>X</b> = nul · <b>2</b> = victoire ext. Elles sont enregistrées et affichées sur chaque match.</div>';
   Object.entries(byDay).forEach(([day,ms])=>{
-    h+=`<div class="day-block"><div class="day-hdr"><span>${day}</span><span>${ms.length} match${ms.length>1?'es':''}</span></div>`;
+    h+=`<div class="day-block"><div class="day-hdr"><span>${day}</span><span>${ms.length} match${ms.length>1?'s':''}</span></div>`;
     ms.forEach(m=>{
       const t1=rt(m,'t1'),t2=rt(m,'t2'),w=getW(m.id);
       const n1=t1?t1.n:(m.p1||'TBD'),f1=t1?t1.f:'',n2=t2?t2.n:(m.p2||'TBD'),f2=t2?t2.f:'';
@@ -445,30 +448,30 @@ function openDetail(code){
   const matches=GS.filter(m=>m.t1===code||m.t2===code);
   let gf=0,ga=0,w=0,d=0,l=0;
   matches.forEach(m=>{const isT1=m.t1===code,mygf=isT1?m.s1:m.s2,myga=isT1?m.s2:m.s1;gf+=mygf;ga+=myga;if(mygf>myga)w++;else if(mygf===myga)d++;else l++;});
-  document.getElementById('dp-title').innerHTML=`<span>${info.f}</span><span>${info.n}</span><span class="${info.adv?'adv-badge':'elim-badge'}">${info.adv?'Advanced':'Eliminated'}</span>`;
-  let body=`<div class="stat-row"><div class="stat-box"><div class="stat-val">${w}</div><div class="stat-lbl">Wins</div></div><div class="stat-box"><div class="stat-val">${d}</div><div class="stat-lbl">Draws</div></div><div class="stat-box"><div class="stat-val">${l}</div><div class="stat-lbl">Losses</div></div><div class="stat-box"><div class="stat-val">${gf}–${ga}</div><div class="stat-lbl">Goals</div></div></div>`;
-  body+=`<div style="margin-bottom:18px"><div class="sec-title">Group Stage Results</div>`;
+  document.getElementById('dp-title').innerHTML=`<span>${info.f}</span><span>${info.n}</span><span class="${info.adv?'adv-badge':'elim-badge'}">${info.adv?'Qualifié':'Éliminé'}</span>`;
+  let body=`<div class="stat-row"><div class="stat-box"><div class="stat-val">${w}</div><div class="stat-lbl">Victoires</div></div><div class="stat-box"><div class="stat-val">${d}</div><div class="stat-lbl">Nuls</div></div><div class="stat-box"><div class="stat-val">${l}</div><div class="stat-lbl">Défaites</div></div><div class="stat-box"><div class="stat-val">${gf}–${ga}</div><div class="stat-lbl">Buts</div></div></div>`;
+  body+=`<div style="margin-bottom:18px"><div class="sec-title">Résultats — phase de groupes</div>`;
   matches.forEach(m=>{
     const isT1=m.t1===code,opp=isT1?m.t2:m.t1,oppInfo=TI[opp]||{f:'',n:opp};
     const mygf=isT1?m.s1:m.s2,myga=isT1?m.s2:m.s1,mySc=isT1?m.sc1:m.sc2,oppSc=isT1?m.sc2:m.sc1;
     const res=mygf>myga?'win':mygf===myga?'draw':'loss';
     const bmap={win:'bw',draw:'bd',loss:'bl'},btxt={win:'W',draw:'D',loss:'L'};
-    body+=`<div class="rc ${res}"><div class="rc-date">Group ${m.g} · ${m.date}</div><div class="rc-teams"><span>${info.f} <strong>${info.n}</strong></span><span class="rc-score">${mygf} – ${myga}</span><span>${oppInfo.f} ${oppInfo.n}</span><span class="badge ${bmap[res]}">${btxt[res]}</span></div><div class="rc-sc">${mySc.length?`<span style="color:#bbb">${info.n}:</span> ${mySc.join(', ')}`:''}${oppSc.length?(mySc.length?'<br>':'')+`<span style="color:#bbb">${oppInfo.n}:</span> ${oppSc.join(', ')}`:''}${(!mySc.length&&!oppSc.length)?'<span style="color:#555">No goals</span>':''}</div></div>`;
+    body+=`<div class="rc ${res}"><div class="rc-date">Groupe ${m.g} · ${m.date}</div><div class="rc-teams"><span>${info.f} <strong>${info.n}</strong></span><span class="rc-score">${mygf} – ${myga}</span><span>${oppInfo.f} ${oppInfo.n}</span><span class="badge ${bmap[res]}">${btxt[res]}</span></div><div class="rc-sc">${mySc.length?`<span style="color:#bbb">${info.n}:</span> ${mySc.join(', ')}`:''}${oppSc.length?(mySc.length?'<br>':'')+`<span style="color:#bbb">${oppInfo.n}:</span> ${oppSc.join(', ')}`:''}${(!mySc.length&&!oppSc.length)?'<span style="color:#555">Aucun but</span>':''}</div></div>`;
   });
   // R32 knockout match
   const koM=KO.find(m=>m.t1&&m.t2&&(m.t1.n===info.n||m.t2.n===info.n));
   if(koM){
     const isT1=koM.t1&&koM.t1.n===info.n,opp=isT1?koM.t2:koM.t1,w2=getW(koM.id),picked=!!w2,won=picked&&w2.n===info.n;
-    body+=`<div class="rc ko"><div class="rc-date">Round of 32 · ${koM.date} · ${koM.cet} CET · ${koM.venue}</div><div class="rc-teams"><span>${info.f} <strong>${info.n}</strong></span><span class="rc-score">vs</span><span>${opp?opp.f:''} ${opp?opp.n:'TBD'}</span>${picked?`<span class="badge ${won?'bw':'bl'}">${won?'W':'L'}</span>`:`<span class="badge btbd">TBD</span>`}</div></div>`;
+    body+=`<div class="rc ko"><div class="rc-date">32es de finale · ${koM.date} · ${koM.cet} CET · ${koM.venue}</div><div class="rc-teams"><span>${info.f} <strong>${info.n}</strong></span><span class="rc-score">vs</span><span>${opp?opp.f:''} ${opp?opp.n:'TBD'}</span>${picked?`<span class="badge ${won?'bw':'bl'}">${won?'W':'L'}</span>`:`<span class="badge btbd">TBD</span>`}</div></div>`;
   }
   body+=`</div>`;
   const scorers=SC[code]||[];
-  body+=`<div style="margin-bottom:18px"><div class="sec-title">Group Stage Scorers</div>`;
+  body+=`<div style="margin-bottom:18px"><div class="sec-title">Buteurs — phase de groupes</div>`;
   if(scorers.length){
     body+=`<div style="background:#1c1f2a;border:1px solid #2a2d3a;border-radius:8px;padding:4px 10px">`;
     scorers.forEach(s=>{const parts=s.match(/^(.+)\((\d+)\)$/);const name=parts?parts[1].trim():s;const goals=parts?parts[2]:'1';body+=`<div class="scorer-row"><div style="display:flex;align-items:center;gap:6px"><span>${info.f}</span><span style="font-size:13px">${name}</span></div><div class="scorer-goals">⚽ ${goals}</div></div>`;});
     body+=`</div>`;
-  } else {body+=`<div style="color:#555;font-size:13px;padding:4px 0">No goals scored in the group stage.</div>`;}
+  } else {body+=`<div style="color:#555;font-size:13px;padding:4px 0">Aucun but marqué en phase de groupes.</div>`;}
   body+=`</div>`;
   document.getElementById('dp-body').innerHTML=body;
   const panel=document.getElementById('dp');panel.classList.add('open');panel.scrollTop=0;
@@ -491,9 +494,9 @@ async function poolSubmit(){
   const nameEl=document.getElementById('pool-name');
   const name=(nameEl.value||'').trim();
   const msg=document.getElementById('pool-submit-msg');
-  if(!name){msg.style.color='#f87171';msg.textContent='Please enter your name.';return;}
+  if(!name){msg.style.color='#f87171';msg.textContent='Veuillez saisir votre nom.';return;}
   myName=name;localStorage.setItem('wc2026_name',name);
-  msg.style.color='#888';msg.textContent='Saving…';
+  msg.style.color='#888';msg.textContent='Enregistrement…';
   const body=JSON.stringify({name:name,picks:picks,updated_at:new Date().toISOString()});
   try{
     let res;
@@ -504,9 +507,9 @@ async function poolSubmit(){
     }
     const j=await res.json();
     if(j&&j[0]&&j[0].id){myEntryId=j[0].id;localStorage.setItem('wc2026_entry_id',myEntryId);}
-    msg.style.color='#6ee7b7';msg.textContent='✓ Bracket submitted to the pool!';
+    msg.style.color='#6ee7b7';msg.textContent='✓ Prono enregistré !';
     await poolFetch();renderPool();
-  }catch(e){msg.style.color='#f87171';msg.textContent='Could not save — check your connection.';}
+  }catch(e){msg.style.color='#f87171';msg.textContent='Échec de l\'enregistrement — vérifiez votre connexion.';}
 }
 // score a picks object against actualResults
 function scoreEntry(entryPicks){
@@ -559,7 +562,7 @@ function switchToBracketViewing(e){
   const br=document.getElementById('bracket');
   const banner=document.createElement('div');
   banner.style.cssText='background:#1e3a5f;border:1px solid #2563eb;border-radius:8px;padding:8px 11px;margin-bottom:10px;font-size:12px;color:#93c5fd;display:flex;justify-content:space-between;align-items:center';
-  banner.innerHTML=`<span>👁 Viewing <b>${e.name}</b>'s bracket (read-only)</span><button onclick="exitViewing()" style="font-size:11px;padding:3px 10px;border:1px solid #2563eb;border-radius:6px;background:transparent;color:#93c5fd;cursor:pointer">Back to mine</button>`;
+  banner.innerHTML=`<span>👁 Prono de <b>${e.name}</b> (lecture seule)</span><button onclick="exitViewing()" style="font-size:11px;padding:3px 10px;border:1px solid #2563eb;border-radius:6px;background:transparent;color:#93c5fd;cursor:pointer">Retour au mien</button>`;
   br.parentElement.insertBefore(banner,br);
 }
 function exitViewing(){
@@ -574,20 +577,20 @@ function renderPool(){
   const el=document.getElementById('pool');
   let h='';
   if(isAdmin){
-    h+=`<div class="admin-banner"><span>🔑</span><span>Admin mode — tap the real winner of each match below to enter results. ${resultsCount()} entered.</span></div>`;
+    h+=`<div class="admin-banner"><span>🔑</span><span>Mode admin — touchez le vrai vainqueur de chaque match pour saisir les résultats. ${resultsCount()} saisi(s).</span></div>`;
   }
   // submit box
-  h+=`<div class="pool-box"><h3>${myEntryId?'Update your entry':'Join the pool'}</h3>
-    <input class="pool-input" id="pool-name" placeholder="Your name" value="${myName.replace(/"/g,'&quot;')}">
-    <button class="pool-btn" onclick="poolSubmit()">${myEntryId?'Update my bracket':'Submit my bracket'}</button>
+  h+=`<div class="pool-box"><h3>${myEntryId?'Modifier votre prono':'Rejoindre les pronos'}</h3>
+    <input class="pool-input" id="pool-name" placeholder="Votre nom" value="${myName.replace(/"/g,'&quot;')}">
+    <button class="pool-btn" onclick="poolSubmit()">${myEntryId?'Mettre à jour mon prono':'Soumettre mon prono'}</button>
     <div class="pool-msg" id="pool-submit-msg"></div>
-    <div style="font-size:11px;color:#666;text-align:center;margin-top:4px">Fill the Bracket tab first, then submit here. You can re-submit to update.</div>
+    <div style="font-size:11px;color:#666;text-align:center;margin-top:4px">Remplissez d'abord l'onglet Tableau, puis soumettez ici. Vous pouvez re-soumettre pour mettre à jour.</div>
   </div>`;
   // leaderboard
   const hasResults=resultsCount()>0;
-  h+=`<div class="pool-box"><h3>${hasResults?'🏆 Leaderboard':'Pool entries'} (${poolEntries.length})</h3>`;
+  h+=`<div class="pool-box"><h3>${hasResults?'🏆 Classement':'Pronos soumis'} (${poolEntries.length})</h3>`;
   if(!poolEntries.length){
-    h+=`<div class="pool-empty">No entries yet. Be the first to submit!</div>`;
+    h+=`<div class="pool-empty">Aucun prono pour l'instant. Soyez le premier !</div>`;
   }else{
     const ranked=poolEntries.map(e=>({...e,pts:scoreEntry(e.picks||{})}))
       .sort((a,b)=>hasResults?(b.pts-a.pts):0);
@@ -595,18 +598,18 @@ function renderPool(){
       const isMe=e.id===myEntryId;
       h+=`<div class="lb-row" onclick="viewEntry('${e.id}')">
         ${hasResults?`<span class="lb-rank ${i<3?'top':''}">${i+1}</span>`:`<span class="lb-rank">•</span>`}
-        <span class="lb-name">${e.name}${isMe?' <span class="you-badge">YOU</span>':''}</span>
-        ${hasResults?`<span style="text-align:right"><div class="lb-pts">${e.pts}</div><div class="lb-pts-lbl">pts</div></span>`:`<span style="font-size:11px;color:#666">tap to view ›</span>`}
+        <span class="lb-name">${e.name}${isMe?' <span class="you-badge">VOUS</span>':''}</span>
+        ${hasResults?`<span style="text-align:right"><div class="lb-pts">${e.pts}</div><div class="lb-pts-lbl">pts</div></span>`:`<span style="font-size:11px;color:#666">toucher pour voir ›</span>`}
       </div>`;
     });
   }
   h+=`</div>`;
   // admin results entry panel
   if(isAdmin){
-    h+=`<div class="pool-box"><h3>Enter actual results</h3>`;
+    h+=`<div class="pool-box"><h3>Saisir les résultats réels</h3>`;
     KO.forEach(m=>{
       const t1=rt(m,'t1'),t2=rt(m,'t2');
-      if(!t1||!t2){h+=`<div style="font-size:11px;color:#444;padding:4px 0">${RL[m.r]} · ${m.date} — teams TBD</div>`;return;}
+      if(!t1||!t2){h+=`<div style="font-size:11px;color:#444;padding:4px 0">${RL[m.r]} · ${m.date} — équipes à venir</div>`;return;}
       const a=actualResults[m.id];
       h+=`<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #1e2130">
         <span style="font-size:9px;color:#666;min-width:34px">${RL[m.r]}</span>
@@ -620,7 +623,7 @@ function renderPool(){
   el.innerHTML=h;
 }
 async function buildPool(){
-  document.getElementById('pool').innerHTML='<div class="pool-empty">Loading pool…</div>';
+  document.getElementById('pool').innerHTML='<div class="pool-empty">Chargement des pronos…</div>';
   await poolFetch();
   renderPool();
 }
@@ -641,6 +644,12 @@ function switchTab(name,el){
   if(!builtTabs[name])buildTab(name);
   else if(name==='pool')buildPool();
 }
+function goPronos(){
+  const tabs=document.querySelectorAll('.tab');
+  const pronosBtn=tabs[tabs.length-1]; // Pronos is the last tab
+  switchTab('pool',pronosBtn);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 function render(){
   // only (re)build tabs that have already been viewed; visible tab always built
   if(!builtTabs[currentTab])buildTab(currentTab);
@@ -648,9 +657,9 @@ function render(){
   if(builtTabs.schedule)renderSchedule();
   if(builtTabs.groups)renderGroups();
   document.getElementById('btn-undo').disabled=history.length===0;
-  const lb=document.getElementById('btn-lock');lb.className=isLocked?'lock-on':'';lb.textContent=isLocked?'🔒 Locked':'🔓 Lock choices';
+  const lb=document.getElementById('btn-lock');lb.className=isLocked?'lock-on':'';lb.textContent=isLocked?'🔒 Verrouillé':'🔓 Verrouiller';
   const sb=document.getElementById('status-bar');
-  if(isLocked){const n=Object.keys(locked).length;sb.textContent=`🔒 ${n} pick${n!==1?'s':''} locked`;}else sb.innerHTML='';
+  if(isLocked){const n=Object.keys(locked).length;sb.textContent=`🔒 ${n} choix verrouillé${n!==1?'s':''}`;}else sb.innerHTML='';
   const dp=document.getElementById('dp');
   if(dp.classList.contains('open')){const fl=document.getElementById('dp-title').children[0]?document.getElementById('dp-title').children[0].textContent:'';const code=Object.keys(TI).find(k=>TI[k].f===fl);if(code)openDetail(code);}
 }
