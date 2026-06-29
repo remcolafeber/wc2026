@@ -161,6 +161,16 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .icon-btn.lock-on{border-color:#22c55e;color:#6ee7b7}
 .lb-summary{max-width:520px;margin:0 auto 12px;padding:0 2px}
 .lb-sum-box{background:#1c1f2a;border:1px solid #2a2d3a;border-radius:10px;padding:8px 10px}
+.res-wrap{background:#1c1f2a;border:1px solid #2a2d3a;border-radius:10px;padding:10px;margin-bottom:14px}
+.res-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:8px}
+.res-sec{font-size:11px;font-weight:600;color:#fbbf24;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px}
+.res-row{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px;border-bottom:1px solid #232633}
+.res-grp{font-size:9px;color:#666;min-width:28px;flex-shrink:0}
+.res-t{flex:1;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res-t.r{text-align:right}
+.res-t.rw{color:#6ee7b7;font-weight:600}
+.res-sc{font-weight:700;color:#e8eaf0;min-width:36px;text-align:center;flex-shrink:0}
+.res-sc.tbd{color:#555;font-weight:400;font-size:10px}
 .scoring-box .sc-sub{font-size:11px;color:#888;margin:-2px 0 8px}
 .sc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px solid #232633}
 .sc-rd{color:#ccc}
@@ -367,7 +377,7 @@ const I18N={
   en:{
     sub:"Tap a team to pick the winner · Tap a country in Groups for details · CET times",
     cta:"📋 Submit my bracket", undo:"Undo", lock:"Lock", lockon:"Locked", reset:"Reset",
-    tab_bracket:"Bracket", tab_pool:"My Bracket", tab_schedule:"Schedule", tab_groups:"Groups",
+    tab_bracket:"Bracket", tab_pool:"My Bracket", tab_schedule:"Schedule", tab_groups:"Results",
     locked_n:n=>`🔒 ${n} pick${n!==1?'s':''} locked`,
     reset_confirm:"Locked picks kept. Clear the rest?", yes:"Yes", no:"No",
     champion:"Champion", final:"Final", third:"3rd place",
@@ -381,7 +391,7 @@ const I18N={
     pool_hint:"Fill the Bracket tab first, then submit here. You can re-submit to update.",
     msg_name:"Please enter your name.", msg_saving:"Saving…", msg_saved:"✓ Bracket submitted!", msg_err:"Could not save — check your connection.",
     leaderboard:"Leaderboard", pool_entries:"Pool entries", no_entries:"No entries yet. Be the first!",
-    scoring:"Scoring", per_correct:"per correct pick", total_avail:"Total available",
+    scoring:"Scoring", per_correct:"per correct pick", total_avail:"Total available", res_matches:"Match Results", res_groupstage:"Group Stage", res_knockout:"Knockout", res_tbd:"TBD", res_standings:"Standings",
     you:"YOU", view:"view ›", tap_view:"tap to view ›", full_ranking:n=>`Full ranking (${n}) ›`,
     admin_banner:n=>`🔑 Admin mode — tap the real winner of each match. ${n} entered.`,
     enter_results:"Enter actual results", teams_tbd:"teams TBD", tiebreak:"Winner (pens):",
@@ -391,7 +401,7 @@ const I18N={
   fr:{
     sub:"Touchez une équipe pour choisir le vainqueur · Touchez un pays dans Groupes pour le détail · Heures CET",
     cta:"📋 Soumettre mon pronostic", undo:"Annuler", lock:"Verrouiller", lockon:"Verrouillé", reset:"Réinitialiser",
-    tab_bracket:"Tableau", tab_pool:"Mon Pronostic", tab_schedule:"Calendrier", tab_groups:"Groupes",
+    tab_bracket:"Tableau", tab_pool:"Mon Pronostic", tab_schedule:"Calendrier", tab_groups:"Résultats",
     locked_n:n=>`🔒 ${n} choix verrouillé${n!==1?'s':''}`,
     reset_confirm:"Choix verrouillés conservés. Effacer les autres ?", yes:"Oui", no:"Non",
     champion:"Champion", final:"Finale", third:"3e place",
@@ -405,7 +415,7 @@ const I18N={
     pool_hint:"Remplissez d'abord l'onglet Tableau, puis soumettez ici. Vous pouvez re-soumettre pour mettre à jour.",
     msg_name:"Veuillez saisir votre nom.", msg_saving:"Enregistrement…", msg_saved:"✓ Prono enregistré !", msg_err:"Échec de l'enregistrement — vérifiez votre connexion.",
     leaderboard:"Classement", pool_entries:"Pronos soumis", no_entries:"Aucun prono pour l'instant. Soyez le premier !",
-    scoring:"Barème", per_correct:"par bon pronostic", total_avail:"Total disponible",
+    scoring:"Barème", per_correct:"par bon pronostic", total_avail:"Total disponible", res_matches:"Résultats des matchs", res_groupstage:"Phase de groupes", res_knockout:"Phase finale", res_tbd:"À venir", res_standings:"Classements",
     you:"VOUS", view:"voir ›", tap_view:"toucher pour voir ›", full_ranking:n=>`Classement complet (${n}) ›`,
     admin_banner:n=>`🔑 Mode admin — touchez le vrai vainqueur de chaque match. ${n} saisi(s).`,
     enter_results:"Saisir les résultats réels", teams_tbd:"équipes à venir", tiebreak:"Vainqueur (tirs au but) :",
@@ -415,7 +425,7 @@ const I18N={
   nl:{
     sub:"Tik op een team om de winnaar te kiezen · Tik op een land in Groepen voor details · CET-tijden",
     cta:"📋 Mijn voorspelling indienen", undo:"Ongedaan", lock:"Vergrendel", lockon:"Vergrendeld", reset:"Reset",
-    tab_bracket:"Schema", tab_pool:"Mijn Voorspelling", tab_schedule:"Kalender", tab_groups:"Groepen",
+    tab_bracket:"Schema", tab_pool:"Mijn Voorspelling", tab_schedule:"Kalender", tab_groups:"Resultaten",
     locked_n:n=>`🔒 ${n} keuze${n!==1?'s':''} vergrendeld`,
     reset_confirm:"Vergrendelde keuzes behouden. Rest wissen?", yes:"Ja", no:"Nee",
     champion:"Kampioen", final:"Finale", third:"3e plaats",
@@ -429,7 +439,7 @@ const I18N={
     pool_hint:"Vul eerst het Schema in, dien dan hier in. Je kunt opnieuw indienen om bij te werken.",
     msg_name:"Voer je naam in.", msg_saving:"Opslaan…", msg_saved:"✓ Voorspelling ingediend!", msg_err:"Opslaan mislukt — controleer je verbinding.",
     leaderboard:"Klassement", pool_entries:"Inzendingen", no_entries:"Nog geen inzendingen. Wees de eerste!",
-    scoring:"Puntentelling", per_correct:"per juiste keuze", total_avail:"Totaal beschikbaar",
+    scoring:"Puntentelling", per_correct:"per juiste keuze", total_avail:"Totaal beschikbaar", res_matches:"Wedstrijduitslagen", res_groupstage:"Groepsfase", res_knockout:"Knock-out", res_tbd:"Nog te spelen", res_standings:"Standen",
     you:"JIJ", view:"bekijk ›", tap_view:"tik om te bekijken ›", full_ranking:n=>`Volledig klassement (${n}) ›`,
     admin_banner:n=>`🔑 Adminmodus — tik op de echte winnaar van elke wedstrijd. ${n} ingevoerd.`,
     enter_results:"Echte resultaten invoeren", teams_tbd:"teams nog onbekend", tiebreak:"Winnaar (penalty's):",
@@ -595,8 +605,32 @@ function renderSchedule(){
   });
   document.getElementById('schedule').innerHTML=h;
 }
+// Results list: group-stage (real scores) + knockout (admin scores or TBD)
+function resultsList(){
+  let h=`<div class="res-wrap"><div class="res-title">📋 ${t('res_matches')}</div>`;
+  // Group stage — has real scores baked in
+  h+=`<div class="res-sec">${t('res_groupstage')}</div>`;
+  GS.forEach(m=>{
+    const i1=TI[m.t1]||{},i2=TI[m.t2]||{};
+    const w1=m.s1>m.s2,w2=m.s2>m.s1;
+    h+=`<div class="res-row"><span class="res-grp">${m.g}</span><span class="res-t ${w1?'rw':''}">${i1.f||''} ${m.t1}</span><span class="res-sc">${m.s1}–${m.s2}</span><span class="res-t r ${w2?'rw':''}">${m.t2} ${i2.f||''}</span></div>`;
+  });
+  // Knockout — scores from admin entry, else TBD
+  h+=`<div class="res-sec">${t('res_knockout')}</div>`;
+  [...KO].sort((a,b)=>a.sk.localeCompare(b.sk)).forEach(m=>{
+    const t1=rt(m,'t1'),t2=rt(m,'t2');
+    const n1=t1?t1.n:'—',f1=t1?t1.f:'',n2=t2?t2.n:'—',f2=t2?t2.f:'';
+    const sc=resScore(m.id),rw=resW(m.id);
+    const scoreCell=sc?`<span class="res-sc">${sc}</span>`:`<span class="res-sc tbd">${t('res_tbd')}</span>`;
+    const w1=rw===1,w2=rw===2;
+    h+=`<div class="res-row"><span class="res-grp">${t('rl')[m.r]||m.r}</span><span class="res-t ${w1?'rw':''}">${f1} ${n1}</span>${scoreCell}<span class="res-t r ${w2?'rw':''}">${n2} ${f2}</span></div>`;
+  });
+  h+=`</div><div class="res-sec" style="margin-top:14px">${t('res_standings')}</div>`;
+  return h;
+}
 function renderGroups(){
   let h=adminResultsPanel();
+  h+=resultsList();
   h+='<div class="groups-grid">';
   Object.entries(GRP).forEach(([g,d])=>{
     h+=`<div class="gc"><div class="gh">Group ${g}</div><table class="gt"><thead><tr><th>Team</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr></thead><tbody>`;
