@@ -44,6 +44,9 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .flag{font-size:13px;flex-shrink:0;line-height:1}
 .tname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lk{font-size:9px;flex-shrink:0}
+.team.real-win{box-shadow:inset 3px 0 0 #22c55e}
+.team.real-lose{opacity:.45}
+.rc{font-size:11px;flex-shrink:0;color:#22c55e;font-weight:700;margin-left:auto}
 .center-col{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:130px;gap:6px;padding:0 4px}
 .final-lbl{font-size:9px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;text-align:center}
 .champ-box{border:1.5px solid #2563eb;border-radius:10px;padding:8px 10px;min-width:100px;text-align:center}
@@ -387,10 +390,14 @@ function doReset(){
 }
 function tEl(mid,slot){
   const m=fm(mid),team=rt(m,slot),isW=picks[mid]===(slot==='t1'?1:2),ml=isML(mid),tbd=!team;
-  let cls='team'+(tbd?' tbd':'')+(isW?(ml?' locked-winner':' winner'):'')+(ml?' locked-team':'');
+  const slotNum=(slot==='t1'?1:2);
+  const realWin=actualResults[mid]===slotNum;     // actual winner of this match
+  const realLose=actualResults[mid]&&actualResults[mid]!==slotNum; // actual loser
+  let cls='team'+(tbd?' tbd':'')+(isW?(ml?' locked-winner':' winner'):'')+(ml?' locked-team':'')+(realWin?' real-win':'')+(realLose?' real-lose':'');
   const lk=ml&&isW?'<span class="lk">🔒</span>':'';
+  const rc=realWin?'<span class="rc">✓</span>':'';
   const oc=(!tbd&&!ml)?`onclick="pickW('${mid}','${slot}')"` :'';
-  return `<div class="${cls}" ${oc}><span class="flag">${team?team.f:''}</span><span class="tname">${team?team.n:'—'}</span>${lk}</div>`;
+  return `<div class="${cls}" ${oc}><span class="flag">${team?team.f:''}</span><span class="tname">${team?team.n:'—'}</span>${lk}${rc}</div>`;
 }
 function mcard(id){const m=fm(id);const o=odds[id]||{};const oh=`<div class="bracket-odds"><span class="${o['1']?'':'empty'}">${o['1']||'–'}</span><span class="${o['X']?'':'empty'}">${o['X']||'–'}</span><span class="${o['2']?'':'empty'}">${o['2']||'–'}</span></div>`;return `<div class="match-wrap"><div class="match-info">${m.cet} CET · ${m.date.split(' ').slice(1).join(' ')}<br>${m.venue||''}</div><div class="match">${tEl(id,'t1')}${tEl(id,'t2')}</div>${oh}</div>`;}
 function renderBracket(){
@@ -531,6 +538,7 @@ async function adminSetResult(mid,slot){
       body:JSON.stringify({picks:actualResults,updated_at:new Date().toISOString()})});
   }catch(e){}
   renderPool();
+  if(builtTabs.bracket&&!viewingEntry)renderBracket();
 }
 async function adminClearResult(mid){
   delete actualResults[mid];
@@ -539,6 +547,7 @@ async function adminClearResult(mid){
       body:JSON.stringify({picks:actualResults,updated_at:new Date().toISOString()})});
   }catch(e){}
   renderPool();
+  if(builtTabs.bracket&&!viewingEntry)renderBracket();
 }
 async function adminDeleteEntry(id,name){
   if(!confirm('Supprimer le prono de "'+name+'" ? Cette action est définitive.'))return;
@@ -674,6 +683,8 @@ function render(){
 }
 load();
 render();
+// pull actual results on startup so the Tableau shows real winners even before opening Pronos
+poolFetch().then(()=>{if(builtTabs.bracket&&!viewingEntry)renderBracket();});
 </script>
 </body>
 </html>
