@@ -471,6 +471,17 @@ function t(k){return (I18N[lang]&&I18N[lang][k])!==undefined?I18N[lang][k]:I18N.
 function resW(mid){const r=actualResults[mid];if(r==null)return null;return (typeof r==='number')?r:r.w;}
 function resScore(mid){const r=actualResults[mid];if(r==null||typeof r==='number')return null;if(r.s1==null||r.s2==null)return null;return r.s1+'–'+r.s2;}
 function hasRes(mid){return resW(mid)!=null;}
+// has a match kicked off yet? sk is "YYYYMMDDHHMM" in CEST (UTC+2, June/July). Compare in UTC.
+function hasKickedOff(mid){
+  const m=fm(mid);if(!m||!m.sk)return false;
+  const s=m.sk;
+  const y=+s.slice(0,4),mo=+s.slice(4,6),d=+s.slice(6,8),hh=+s.slice(8,10),mm=+s.slice(10,12);
+  // CEST = UTC+2 → kickoff in UTC ms
+  const koUTC=Date.UTC(y,mo-1,d,hh-2,mm);
+  return Date.now()>=koUTC;
+}
+// a match's winner pick is locked if it already has a result OR it has kicked off
+function pickLocked(mid){return resW(mid)!=null||hasKickedOff(mid);}
 function setLang(l){
   lang=l;localStorage.setItem('wc2026_lang',l);
   applyStaticText();
@@ -546,7 +557,7 @@ function rtReal(m,slot){
 function isML(id){return isLocked&&locked[id];}
 function pickW(id,slot){
   if(viewingEntry)return; // read-only while viewing another player
-  if(resW(id)!=null)return; // match already played/decided — pick is locked
+  if(pickLocked(id))return; // match kicked off or already decided — pick is locked
   if(isML(id))return;const m=fm(id);if(!m)return;
   const team=rt(m,slot);if(!team)return;
   const np=slot==='t1'?1:2;if(picks[id]===np)return;
@@ -589,11 +600,11 @@ function tEl(mid,slot){
   // highlighted in the other slot of this same match, so no need to repeat it here)
   let nameHtml=`<span class="tname">${team?team.n:'—'}</span>`;
   if(wrongPick){nameHtml=`<span class="tname strike-name">${team?team.n:'—'}</span>`;}
-  const played=rw!=null;
+  const played=pickLocked(mid);
   const oc=(!tbd&&!ml&&!played&&!viewingEntry)?`onclick="pickW('${mid}','${slot}')"` :'';
   return `<div class="${cls}${played?' played':''}" ${oc}><span class="flag">${team?team.f:''}</span>${nameHtml}${lk}${badge}${gl}</div>`;
 }
-function mcard(id){const m=fm(id);const o=odds[id]||{};const oh=`<div class="bracket-odds"><span class="${o['1']?'':'empty'}">${o['1']||'–'}</span><span class="${o['X']?'':'empty'}">${o['X']||'–'}</span><span class="${o['2']?'':'empty'}">${o['2']||'–'}</span></div>`;return `<div class="match-wrap"><div class="match-info">${m.cet} CET · ${m.date.split(' ').slice(1).join(' ')}<br>${m.venue||''}</div><div class="match">${tEl(id,'t1')}${tEl(id,'t2')}</div>${oh}</div>`;}
+function mcard(id){const m=fm(id);const o=odds[id]||{};const oh=`<div class="bracket-odds"><span class="${o['1']?'':'empty'}">${o['1']||'–'}</span><span class="${o['X']?'':'empty'}">${o['X']||'–'}</span><span class="${o['2']?'':'empty'}">${o['2']||'–'}</span></div>`;const lockIcon=(pickLocked(id)&&resW(id)==null)?' 🔒':'';return `<div class="match-wrap"><div class="match-info">${m.cet} CET · ${m.date.split(' ').slice(1).join(' ')}${lockIcon}<br>${m.venue||''}</div><div class="match">${tEl(id,'t1')}${tEl(id,'t2')}</div>${oh}</div>`;}
 function renderBracket(){
   // when viewing someone else's bracket, render with their picks (read-only)
   const _savedPicks=picks, _savedLocked=isLocked;
