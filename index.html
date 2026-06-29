@@ -34,7 +34,7 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .match-wrap{display:flex;flex-direction:column;gap:1px}
 .match-info{font-size:8px;color:#555;text-align:center;margin-bottom:1px;line-height:1.3}
 .match{border:1px solid #2a2d3a;border-radius:6px;overflow:hidden;background:#1c1f2a;width:108px}
-.team{display:flex;align-items:center;gap:4px;padding:4px 6px;font-size:11px;cursor:pointer;min-height:25px;border-bottom:1px solid #2a2d3a;transition:background .1s;-webkit-tap-highlight-color:transparent}
+.team{display:flex;align-items:center;gap:3px;padding:4px 5px;font-size:11px;cursor:pointer;min-height:25px;border-bottom:1px solid #2a2d3a;transition:background .1s;-webkit-tap-highlight-color:transparent}
 .team:last-child{border-bottom:none}
 .team:active:not(.tbd):not(.locked-team){background:#252836}
 .team.winner{background:#1e3a5f;font-weight:600;color:#93c5fd}
@@ -45,12 +45,13 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .tname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lk{font-size:9px;flex-shrink:0}
 .team.real-win{box-shadow:inset 3px 0 0 #22c55e}
-.team.real-lose{opacity:.45}
-.team.wrong-pick{background:#3b1515 !important;color:#f87171 !important;opacity:1}
-.team.wrong-pick .tname{text-decoration:line-through;text-decoration-color:#f87171}
-.team.right-pick{background:#14432a !important;color:#6ee7b7 !important}
-.rc{font-size:11px;flex-shrink:0;color:#22c55e;font-weight:700}
-.tscore{font-size:11px;font-weight:700;color:#e8eaf0;flex-shrink:0;background:#0f1117;border-radius:4px;padding:0 5px;min-width:16px;text-align:center}
+.team.real-lose{opacity:.4}
+.team.wrong-pick{color:#f87171}
+.team.right-pick{color:#6ee7b7}
+.rc{font-size:10px;flex-shrink:0;font-weight:700}
+.rc.ok{color:#6ee7b7}
+.rc.bad{color:#f87171}
+.tscore{font-size:11px;font-weight:700;color:#9aa0ad;flex-shrink:0;min-width:12px;text-align:right;margin-left:2px}
 .team.real-win .tscore{color:#6ee7b7}
 .rc.ok{color:#6ee7b7}
 .rc.bad{color:#f87171}
@@ -553,12 +554,12 @@ function tEl(mid,slot){
   const r=actualResults[mid];
   let gl='';
   if(r&&typeof r==='object'&&r.s1!=null&&r.s2!=null){const g=(slot==='t1'?r.s1:r.s2);gl=`<span class="tscore">${g}</span>`;}
+  // single small badge: only mark the USER's correctness (✓ right pick / ✗ wrong pick)
   let badge='';
-  if(rightPick)badge='<span class="rc ok">✓</span>';      // your correct pick
-  else if(realWin)badge='<span class="rc">✓</span>';      // real winner (you didn't pick)
-  else if(wrongPick)badge='<span class="rc bad">✗</span>';// your wrong pick
+  if(rightPick)badge='<span class="rc ok">✓</span>';
+  else if(wrongPick)badge='<span class="rc bad">✗</span>';
   const oc=(!tbd&&!ml)?`onclick="pickW('${mid}','${slot}')"` :'';
-  return `<div class="${cls}" ${oc}><span class="flag">${team?team.f:''}</span><span class="tname">${team?team.n:'—'}</span>${gl}${lk}${badge}</div>`;
+  return `<div class="${cls}" ${oc}><span class="flag">${team?team.f:''}</span><span class="tname">${team?team.n:'—'}</span>${lk}${badge}${gl}</div>`;
 }
 function mcard(id){const m=fm(id);const o=odds[id]||{};const oh=`<div class="bracket-odds"><span class="${o['1']?'':'empty'}">${o['1']||'–'}</span><span class="${o['X']?'':'empty'}">${o['X']||'–'}</span><span class="${o['2']?'':'empty'}">${o['2']||'–'}</span></div>`;return `<div class="match-wrap"><div class="match-info">${m.cet} CET · ${m.date.split(' ').slice(1).join(' ')}<br>${m.venue||''}</div><div class="match">${tEl(id,'t1')}${tEl(id,'t2')}</div>${oh}</div>`;}
 function renderBracket(){
@@ -607,16 +608,8 @@ function renderSchedule(){
 }
 // Results list: group-stage (real scores) + knockout (admin scores or TBD)
 function resultsList(){
-  let h=`<div class="res-wrap"><div class="res-title">📋 ${t('res_matches')}</div>`;
-  // Group stage — has real scores baked in
-  h+=`<div class="res-sec">${t('res_groupstage')}</div>`;
-  GS.forEach(m=>{
-    const i1=TI[m.t1]||{},i2=TI[m.t2]||{};
-    const w1=m.s1>m.s2,w2=m.s2>m.s1;
-    h+=`<div class="res-row"><span class="res-grp">${m.g}</span><span class="res-t ${w1?'rw':''}">${i1.f||''} ${m.t1}</span><span class="res-sc">${m.s1}–${m.s2}</span><span class="res-t r ${w2?'rw':''}">${m.t2} ${i2.f||''}</span></div>`;
-  });
+  let h=`<div class="res-wrap"><div class="res-title">📋 ${t('res_knockout')}</div>`;
   // Knockout — scores from admin entry, else TBD
-  h+=`<div class="res-sec">${t('res_knockout')}</div>`;
   [...KO].sort((a,b)=>a.sk.localeCompare(b.sk)).forEach(m=>{
     const t1=rt(m,'t1'),t2=rt(m,'t2');
     const n1=t1?t1.n:'—',f1=t1?t1.f:'',n2=t2?t2.n:'—',f2=t2?t2.f:'';
