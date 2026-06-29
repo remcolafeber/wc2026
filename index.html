@@ -49,7 +49,9 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .team.wrong-pick{background:#3b1515 !important;color:#f87171 !important;opacity:1}
 .team.wrong-pick .tname{text-decoration:line-through;text-decoration-color:#f87171}
 .team.right-pick{background:#14432a !important;color:#6ee7b7 !important}
-.rc{font-size:11px;flex-shrink:0;color:#22c55e;font-weight:700;margin-left:auto}
+.rc{font-size:11px;flex-shrink:0;color:#22c55e;font-weight:700}
+.tscore{font-size:11px;font-weight:700;color:#e8eaf0;flex-shrink:0;background:#0f1117;border-radius:4px;padding:0 5px;min-width:16px;text-align:center}
+.team.real-win .tscore{color:#6ee7b7}
 .rc.ok{color:#6ee7b7}
 .rc.bad{color:#f87171}
 .center-col{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:130px;gap:6px;padding:0 4px}
@@ -382,7 +384,7 @@ const I18N={
     scoring:"Scoring", per_correct:"per correct pick", total_avail:"Total available",
     you:"YOU", view:"view ›", tap_view:"tap to view ›", full_ranking:n=>`Full ranking (${n}) ›`,
     admin_banner:n=>`🔑 Admin mode — tap the real winner of each match. ${n} entered.`,
-    enter_results:"Enter actual results", teams_tbd:"teams TBD",
+    enter_results:"Enter actual results", teams_tbd:"teams TBD", tiebreak:"Winner (pens):",
     viewing:name=>`👁 ${name}'s bracket (read-only)`, back_mine:"Back to mine",
     loading:"Loading…", del_confirm:name=>`Delete "${name}"'s entry? This is permanent.`, del_err:"Delete failed — check your connection."
   },
@@ -406,7 +408,7 @@ const I18N={
     scoring:"Barème", per_correct:"par bon pronostic", total_avail:"Total disponible",
     you:"VOUS", view:"voir ›", tap_view:"toucher pour voir ›", full_ranking:n=>`Classement complet (${n}) ›`,
     admin_banner:n=>`🔑 Mode admin — touchez le vrai vainqueur de chaque match. ${n} saisi(s).`,
-    enter_results:"Saisir les résultats réels", teams_tbd:"équipes à venir",
+    enter_results:"Saisir les résultats réels", teams_tbd:"équipes à venir", tiebreak:"Vainqueur (tirs au but) :",
     viewing:name=>`👁 Prono de ${name} (lecture seule)`, back_mine:"Retour au mien",
     loading:"Chargement…", del_confirm:name=>`Supprimer le prono de "${name}" ? Cette action est définitive.`, del_err:"Échec de la suppression — vérifiez votre connexion."
   },
@@ -430,12 +432,16 @@ const I18N={
     scoring:"Puntentelling", per_correct:"per juiste keuze", total_avail:"Totaal beschikbaar",
     you:"JIJ", view:"bekijk ›", tap_view:"tik om te bekijken ›", full_ranking:n=>`Volledig klassement (${n}) ›`,
     admin_banner:n=>`🔑 Adminmodus — tik op de echte winnaar van elke wedstrijd. ${n} ingevoerd.`,
-    enter_results:"Echte resultaten invoeren", teams_tbd:"teams nog onbekend",
+    enter_results:"Echte resultaten invoeren", teams_tbd:"teams nog onbekend", tiebreak:"Winnaar (penalty's):",
     viewing:name=>`👁 Voorspelling van ${name} (alleen lezen)`, back_mine:"Terug naar de mijne",
     loading:"Laden…", del_confirm:name=>`Inzending van "${name}" verwijderen? Dit is permanent.`, del_err:"Verwijderen mislukt — controleer je verbinding."
   }
 };
 function t(k){return (I18N[lang]&&I18N[lang][k])!==undefined?I18N[lang][k]:I18N.en[k];}
+// result helpers — actualResults[mid] is {s1,s2,w} (scores + winner). Backward compat: a plain number = winner only.
+function resW(mid){const r=actualResults[mid];if(r==null)return null;return (typeof r==='number')?r:r.w;}
+function resScore(mid){const r=actualResults[mid];if(r==null||typeof r==='number')return null;if(r.s1==null||r.s2==null)return null;return r.s1+'–'+r.s2;}
+function hasRes(mid){return resW(mid)!=null;}
 function setLang(l){
   lang=l;localStorage.setItem('wc2026_lang',l);
   applyStaticText();
@@ -524,18 +530,23 @@ function doReset(){
 function tEl(mid,slot){
   const m=fm(mid),team=rt(m,slot),isW=picks[mid]===(slot==='t1'?1:2),ml=isML(mid),tbd=!team;
   const slotNum=(slot==='t1'?1:2);
-  const realWin=actualResults[mid]===slotNum;     // actual winner of this match
-  const realLose=actualResults[mid]&&actualResults[mid]!==slotNum; // actual loser
+  const rw=resW(mid);
+  const realWin=rw===slotNum;     // actual winner of this match
+  const realLose=rw&&rw!==slotNum; // actual loser
   const wrongPick=isW&&realLose;                  // picked this team but it lost
   const rightPick=isW&&realWin;                   // picked this team and it won
   let cls='team'+(tbd?' tbd':'')+(isW?(ml?' locked-winner':' winner'):'')+(ml?' locked-team':'')+(realWin?' real-win':'')+(realLose?' real-lose':'')+(wrongPick?' wrong-pick':'')+(rightPick?' right-pick':'');
   const lk=ml&&isW?'<span class="lk">🔒</span>':'';
+  // per-team goals if a detailed score exists
+  const r=actualResults[mid];
+  let gl='';
+  if(r&&typeof r==='object'&&r.s1!=null&&r.s2!=null){const g=(slot==='t1'?r.s1:r.s2);gl=`<span class="tscore">${g}</span>`;}
   let badge='';
   if(rightPick)badge='<span class="rc ok">✓</span>';      // your correct pick
   else if(realWin)badge='<span class="rc">✓</span>';      // real winner (you didn't pick)
   else if(wrongPick)badge='<span class="rc bad">✗</span>';// your wrong pick
   const oc=(!tbd&&!ml)?`onclick="pickW('${mid}','${slot}')"` :'';
-  return `<div class="${cls}" ${oc}><span class="flag">${team?team.f:''}</span><span class="tname">${team?team.n:'—'}</span>${lk}${badge}</div>`;
+  return `<div class="${cls}" ${oc}><span class="flag">${team?team.f:''}</span><span class="tname">${team?team.n:'—'}</span>${gl}${lk}${badge}</div>`;
 }
 function mcard(id){const m=fm(id);const o=odds[id]||{};const oh=`<div class="bracket-odds"><span class="${o['1']?'':'empty'}">${o['1']||'–'}</span><span class="${o['X']?'':'empty'}">${o['X']||'–'}</span><span class="${o['2']?'':'empty'}">${o['2']||'–'}</span></div>`;return `<div class="match-wrap"><div class="match-info">${m.cet} CET · ${m.date.split(' ').slice(1).join(' ')}<br>${m.venue||''}</div><div class="match">${tEl(id,'t1')}${tEl(id,'t2')}</div>${oh}</div>`;}
 function renderBracket(){
@@ -573,7 +584,10 @@ function renderSchedule(){
       const w1=w&&t1&&w.n===t1.n,w2=w&&t2&&w.n===t2.n;
       const o=odds[m.id]||{};
       const oddsBox=`<div class="odds-box"><div><span class="odds-lbl">1</span><input class="odds-input" type="text" inputmode="decimal" placeholder="–" value="${o['1']||''}" oninput="setOdds('${m.id}','1',this.value)"></div><div><span class="odds-lbl">X</span><input class="odds-input" type="text" inputmode="decimal" placeholder="–" value="${o['X']||''}" oninput="setOdds('${m.id}','X',this.value)"></div><div><span class="odds-lbl">2</span><input class="odds-input" type="text" inputmode="decimal" placeholder="–" value="${o['2']||''}" oninput="setOdds('${m.id}','2',this.value)"></div></div>`;
-      h+=`<div class="sm${w?' picked':''}" style="flex-wrap:wrap"><span class="sm-time">${m.cet}<br>CET</span><span class="sm-round">${t('rl')[m.r]||m.r}</span><span class="sm-teams"><span class="${w1?'w1':''}">${f1} ${n1}</span><span class="vs">vs</span><span class="${w2?'w1':''}">${f2} ${n2}</span></span>${oddsBox}<span class="sm-venue" style="width:100%;text-align:left;max-width:none;margin-top:2px;color:#444">${m.venue||''}</span></div>`;
+      const sc=resScore(m.id);const rw=resW(m.id);
+      const rw1=rw===1,rw2=rw===2;
+      const mid=sc?`<span class="vs" style="font-weight:700;color:#e8eaf0">${sc}</span>`:`<span class="vs">vs</span>`;
+      h+=`<div class="sm${w?' picked':''}" style="flex-wrap:wrap"><span class="sm-time">${m.cet}<br>CET</span><span class="sm-round">${t('rl')[m.r]||m.r}</span><span class="sm-teams"><span class="${w1?'w1':''}" style="${rw1?'color:#6ee7b7;font-weight:600':''}">${f1} ${n1}</span>${mid}<span class="${w2?'w1':''}" style="${rw2?'color:#6ee7b7;font-weight:600':''}">${f2} ${n2}</span></span>${oddsBox}<span class="sm-venue" style="width:100%;text-align:left;max-width:none;margin-top:2px;color:#444">${m.venue||''}</span></div>`;
     });
     h+='</div>';
   });
@@ -664,24 +678,43 @@ async function poolSubmit(){
 function scoreEntry(entryPicks){
   let pts=0;
   KO.forEach(m=>{
-    const actual=actualResults[m.id];   // 1 or 2
+    const actual=resW(m.id);   // 1 or 2 (winner)
     if(!actual)return;
     if(entryPicks[m.id]===actual)pts+=(PTS[m.r]||1);
   });
   return pts;
 }
-function resultsCount(){return Object.keys(actualResults).length;}
+function resultsCount(){return KO.filter(m=>resW(m.id)!=null).length;}
 
 // ── POOL: admin results entry ──
-async function adminSetResult(mid,slot){
-  actualResults[mid]=(slot==='t1'?1:2);
+async function saveResults(){
   try{
     await fetch(SB_URL+'/rest/v1/results?id=eq.1',{method:'PATCH',headers:SB_HEAD,
       body:JSON.stringify({picks:actualResults,updated_at:new Date().toISOString()})});
   }catch(e){}
+}
+// set a score; winner auto-derived. For draws, keep existing winner or require tiebreak pick.
+async function adminSetScore(mid,which,val){
+  let r=actualResults[mid];
+  if(!r||typeof r==='number')r={s1:null,s2:null,w:(typeof r==='number'?r:null)};
+  const n=(val===''||val==null)?null:Math.max(0,parseInt(val)||0);
+  if(which===1)r.s1=n;else r.s2=n;
+  // auto-derive winner when decisive
+  if(r.s1!=null&&r.s2!=null){
+    if(r.s1>r.s2)r.w=1;else if(r.s2>r.s1)r.w=2;
+    // if equal, leave r.w as-is (tiebreak handled by adminSetTiebreak)
+  }
+  actualResults[mid]=r;
+  await saveResults();
   renderPool();
   if(builtTabs.bracket&&!viewingEntry)renderBracket();
   renderLbSummary();
+}
+async function adminSetTiebreak(mid,slot){
+  let r=actualResults[mid];if(!r||typeof r==='number')r={s1:null,s2:null,w:null};
+  r.w=(slot==='t1'?1:2);actualResults[mid]=r;
+  await saveResults();renderPool();
+  if(builtTabs.bracket&&!viewingEntry)renderBracket();renderLbSummary();
 }
 async function adminClearResult(mid){
   delete actualResults[mid];
@@ -771,12 +804,26 @@ function renderPool(){
     KO.forEach(m=>{
       const t1=rt(m,'t1'),t2=rt(m,'t2');
       if(!t1||!t2){h+=`<div style="font-size:11px;color:#444;padding:4px 0">${t('rl')[m.r]} · ${m.date} — ${t('teams_tbd')}</div>`;return;}
-      const a=actualResults[m.id];
-      h+=`<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #1e2130">
-        <span style="font-size:9px;color:#666;min-width:34px">${t('rl')[m.r]}</span>
-        <button onclick="adminSetResult('${m.id}','t1')" style="flex:1;font-size:11px;padding:5px;border-radius:6px;cursor:pointer;border:1px solid ${a===1?'#22c55e':'#2a2d3a'};background:${a===1?'#14432a':'#1c1f2a'};color:${a===1?'#6ee7b7':'#ccc'}">${t1.f} ${t1.n}</button>
-        <button onclick="adminSetResult('${m.id}','t2')" style="flex:1;font-size:11px;padding:5px;border-radius:6px;cursor:pointer;border:1px solid ${a===2?'#22c55e':'#2a2d3a'};background:${a===2?'#14432a':'#1c1f2a'};color:${a===2?'#6ee7b7':'#ccc'}">${t2.f} ${t2.n}</button>
-        ${a?`<button onclick="adminClearResult('${m.id}')" style="font-size:10px;padding:5px 7px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer">✕</button>`:''}
+      const r=actualResults[m.id];
+      const s1=(r&&typeof r==='object'&&r.s1!=null)?r.s1:'';
+      const s2=(r&&typeof r==='object'&&r.s2!=null)?r.s2:'';
+      const w=resW(m.id);
+      const isDraw=(s1!==''&&s2!==''&&s1===s2);
+      h+=`<div style="padding:6px 0;border-bottom:1px solid #1e2130">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;color:#666;min-width:34px">${t('rl')[m.r]}</span>
+          <span style="flex:1;font-size:12px;text-align:right;${w===1?'color:#6ee7b7;font-weight:600':'color:#ccc'}">${t1.f} ${t1.n}</span>
+          <input type="text" inputmode="numeric" value="${s1}" onchange="adminSetScore('${m.id}',1,this.value)" style="width:34px;text-align:center;font-size:13px;padding:4px;border:1px solid #2a2d3a;border-radius:6px;background:#0f1117;color:#e8eaf0">
+          <span style="color:#555">–</span>
+          <input type="text" inputmode="numeric" value="${s2}" onchange="adminSetScore('${m.id}',2,this.value)" style="width:34px;text-align:center;font-size:13px;padding:4px;border:1px solid #2a2d3a;border-radius:6px;background:#0f1117;color:#e8eaf0">
+          <span style="flex:1;font-size:12px;${w===2?'color:#6ee7b7;font-weight:600':'color:#ccc'}">${t2.f} ${t2.n}</span>
+          ${r?`<button onclick="adminClearResult('${m.id}')" style="font-size:10px;padding:4px 7px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer">✕</button>`:''}
+        </div>
+        ${isDraw?`<div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-left:40px">
+          <span style="font-size:10px;color:#fbbf24">⚖ ${t('tiebreak')}</span>
+          <button onclick="adminSetTiebreak('${m.id}','t1')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===1?'#22c55e':'#2a2d3a'};background:${w===1?'#14432a':'#1c1f2a'};color:${w===1?'#6ee7b7':'#ccc'}">${t1.n}</button>
+          <button onclick="adminSetTiebreak('${m.id}','t2')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===2?'#22c55e':'#2a2d3a'};background:${w===2?'#14432a':'#1c1f2a'};color:${w===2?'#6ee7b7':'#ccc'}">${t2.n}</button>
+        </div>`:''}
       </div>`;
     });
     h+=`</div>`;
