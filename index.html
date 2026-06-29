@@ -533,6 +533,14 @@ function rt(m,slot){
   if(pid.startsWith('L_')){const sfM=fm(pid.replace('L_',''));if(!sfM||!picks[sfM.id])return null;const w=getW(sfM.id),t1=rt(sfM,'t1'),t2=rt(sfM,'t2');return w&&t1&&t2?(w.n===t1.n?t2:t1):null;}
   return getW(pid)||null;
 }
+// REAL-results resolvers: who actually advances, based on admin-entered results (not predictions)
+function getWReal(id){const w=resW(id);if(!w)return null;const m=fm(id);if(!m)return null;const t1=rtReal(m,'t1'),t2=rtReal(m,'t2');return w===1?t1:t2;}
+function rtReal(m,slot){
+  if(m[slot])return m[slot];
+  const pid=slot==='t1'?m.p1:m.p2;if(!pid)return null;
+  if(pid.startsWith('L_')){const sfM=fm(pid.replace('L_',''));if(!sfM||resW(sfM.id)==null)return null;const w=getWReal(sfM.id),t1=rtReal(sfM,'t1'),t2=rtReal(sfM,'t2');return w&&t1&&t2?(w.n===t1.n?t2:t1):null;}
+  return getWReal(pid)||null;
+}
 function isML(id){return isLocked&&locked[id];}
 function pickW(id,slot){
   if(viewingEntry)return; // read-only while viewing another player
@@ -627,7 +635,7 @@ function resultsList(){
   let h=`<div class="res-wrap"><div class="res-title">📋 ${t('res_knockout')}</div>`;
   // Knockout — scores from admin entry, else TBD
   [...KO].sort((a,b)=>a.sk.localeCompare(b.sk)).forEach(m=>{
-    const t1=rt(m,'t1'),t2=rt(m,'t2');
+    const t1=rtReal(m,'t1'),t2=rtReal(m,'t2');
     const n1=t1?t1.n:'—',f1=t1?t1.f:'',n2=t2?t2.n:'—',f2=t2?t2.f:'';
     const sc=resScore(m.id),rw=resW(m.id);
     const scoreCell=sc?`<span class="res-sc">${sc}</span>`:`<span class="res-sc tbd">${t('res_tbd')}</span>`;
@@ -900,7 +908,7 @@ function adminResultsPanel(){
   if(!isAdmin)return '';
   let h=`<div class="pool-box" style="margin-bottom:14px"><h3>${t('enter_results')}</h3>`;
   KO.forEach(m=>{
-    const t1=rt(m,'t1'),t2=rt(m,'t2');
+    const t1=rtReal(m,'t1'),t2=rtReal(m,'t2');
     if(!t1||!t2){h+=`<div style="font-size:11px;color:#444;padding:4px 0">${t('rl')[m.r]} · ${m.date} — ${t('teams_tbd')}</div>`;return;}
     const r=actualResults[m.id];
     const s1=(r&&typeof r==='object'&&r.s1!=null)?r.s1:'';
