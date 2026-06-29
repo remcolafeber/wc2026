@@ -43,6 +43,8 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .team.locked-winner{background:#14432a;font-weight:600;color:#6ee7b7}
 .flag{font-size:13px;flex-shrink:0;line-height:1}
 .tname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tname.strike-name{text-decoration:line-through;text-decoration-color:#f87171;color:#888}
+.team.played{cursor:default}
 .lk{font-size:9px;flex-shrink:0}
 .team.real-win{box-shadow:inset 3px 0 0 #22c55e}
 .team.real-lose{opacity:.4}
@@ -544,6 +546,7 @@ function rtReal(m,slot){
 function isML(id){return isLocked&&locked[id];}
 function pickW(id,slot){
   if(viewingEntry)return; // read-only while viewing another player
+  if(resW(id)!=null)return; // match already played/decided — pick is locked
   if(isML(id))return;const m=fm(id);if(!m)return;
   const team=rt(m,slot);if(!team)return;
   const np=slot==='t1'?1:2;if(picks[id]===np)return;
@@ -582,8 +585,13 @@ function tEl(mid,slot){
   let badge='';
   if(rightPick)badge='<span class="rc ok">✓</span>';
   else if(wrongPick)badge='<span class="rc bad">✗</span>';
-  const oc=(!tbd&&!ml)?`onclick="pickW('${mid}','${slot}')"` :'';
-  return `<div class="${cls}" ${oc}><span class="flag">${team?team.f:''}</span><span class="tname">${team?team.n:'—'}</span>${lk}${badge}${gl}</div>`;
+  // name display: strike through the player's WRONG pick (the real winner is already shown
+  // highlighted in the other slot of this same match, so no need to repeat it here)
+  let nameHtml=`<span class="tname">${team?team.n:'—'}</span>`;
+  if(wrongPick){nameHtml=`<span class="tname strike-name">${team?team.n:'—'}</span>`;}
+  const played=rw!=null;
+  const oc=(!tbd&&!ml&&!played&&!viewingEntry)?`onclick="pickW('${mid}','${slot}')"` :'';
+  return `<div class="${cls}${played?' played':''}" ${oc}><span class="flag">${team?team.f:''}</span>${nameHtml}${lk}${badge}${gl}</div>`;
 }
 function mcard(id){const m=fm(id);const o=odds[id]||{};const oh=`<div class="bracket-odds"><span class="${o['1']?'':'empty'}">${o['1']||'–'}</span><span class="${o['X']?'':'empty'}">${o['X']||'–'}</span><span class="${o['2']?'':'empty'}">${o['2']||'–'}</span></div>`;return `<div class="match-wrap"><div class="match-info">${m.cet} CET · ${m.date.split(' ').slice(1).join(' ')}<br>${m.venue||''}</div><div class="match">${tEl(id,'t1')}${tEl(id,'t2')}</div>${oh}</div>`;}
 function renderBracket(){
