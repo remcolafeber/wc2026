@@ -596,7 +596,8 @@ function renderSchedule(){
   document.getElementById('schedule').innerHTML=h;
 }
 function renderGroups(){
-  let h='<div class="groups-grid">';
+  let h=adminResultsPanel();
+  h+='<div class="groups-grid">';
   Object.entries(GRP).forEach(([g,d])=>{
     h+=`<div class="gc"><div class="gh">Group ${g}</div><table class="gt"><thead><tr><th>Team</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr></thead><tbody>`;
     d.t.forEach((t,i)=>{
@@ -708,15 +709,19 @@ async function adminSetScore(mid,which,val){
   }
   actualResults[mid]=r;
   await saveResults();
-  renderPool();
-  if(builtTabs.bracket&&!viewingEntry)renderBracket();
-  renderLbSummary();
+  refreshAfterResult();
 }
 async function adminSetTiebreak(mid,slot){
   let r=actualResults[mid];if(!r||typeof r==='number')r={s1:null,s2:null,w:null};
   r.w=(slot==='t1'?1:2);actualResults[mid]=r;
-  await saveResults();renderPool();
-  if(builtTabs.bracket&&!viewingEntry)renderBracket();renderLbSummary();
+  await saveResults();
+  refreshAfterResult();
+}
+function refreshAfterResult(){
+  if(currentTab==='groups')renderGroups();
+  else if(currentTab==='pool')renderPool();
+  if(builtTabs.bracket&&!viewingEntry)renderBracket();
+  renderLbSummary();
 }
 async function adminClearResult(mid){
   delete actualResults[mid];
@@ -724,9 +729,7 @@ async function adminClearResult(mid){
     await fetch(SB_URL+'/rest/v1/results?id=eq.1',{method:'PATCH',headers:SB_HEAD,
       body:JSON.stringify({picks:actualResults,updated_at:new Date().toISOString()})});
   }catch(e){}
-  renderPool();
-  if(builtTabs.bracket&&!viewingEntry)renderBracket();
-  renderLbSummary();
+  refreshAfterResult();
 }
 async function adminDeleteEntry(id,name){
   if(!confirm(t('del_confirm')(name)))return;
@@ -800,37 +803,39 @@ function renderPool(){
   h+=`</div>`;
   // scoring explainer
   h+=scoringBox();
-  // admin results entry panel
-  if(isAdmin){
-    h+=`<div class="pool-box"><h3>${t('enter_results')}</h3>`;
-    KO.forEach(m=>{
-      const t1=rt(m,'t1'),t2=rt(m,'t2');
-      if(!t1||!t2){h+=`<div style="font-size:11px;color:#444;padding:4px 0">${t('rl')[m.r]} · ${m.date} — ${t('teams_tbd')}</div>`;return;}
-      const r=actualResults[m.id];
-      const s1=(r&&typeof r==='object'&&r.s1!=null)?r.s1:'';
-      const s2=(r&&typeof r==='object'&&r.s2!=null)?r.s2:'';
-      const w=resW(m.id);
-      const isDraw=(s1!==''&&s2!==''&&s1===s2);
-      h+=`<div style="padding:6px 0;border-bottom:1px solid #1e2130">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:9px;color:#666;min-width:34px">${t('rl')[m.r]}</span>
-          <span style="flex:1;font-size:12px;text-align:right;${w===1?'color:#6ee7b7;font-weight:600':'color:#ccc'}">${t1.f} ${t1.n}</span>
-          <input type="text" inputmode="numeric" value="${s1}" onchange="adminSetScore('${m.id}',1,this.value)" style="width:34px;text-align:center;font-size:13px;padding:4px;border:1px solid #2a2d3a;border-radius:6px;background:#0f1117;color:#e8eaf0">
-          <span style="color:#555">–</span>
-          <input type="text" inputmode="numeric" value="${s2}" onchange="adminSetScore('${m.id}',2,this.value)" style="width:34px;text-align:center;font-size:13px;padding:4px;border:1px solid #2a2d3a;border-radius:6px;background:#0f1117;color:#e8eaf0">
-          <span style="flex:1;font-size:12px;${w===2?'color:#6ee7b7;font-weight:600':'color:#ccc'}">${t2.f} ${t2.n}</span>
-          ${r?`<button onclick="adminClearResult('${m.id}')" style="font-size:10px;padding:4px 7px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer">✕</button>`:''}
-        </div>
-        ${isDraw?`<div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-left:40px">
-          <span style="font-size:10px;color:#fbbf24">⚖ ${t('tiebreak')}</span>
-          <button onclick="adminSetTiebreak('${m.id}','t1')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===1?'#22c55e':'#2a2d3a'};background:${w===1?'#14432a':'#1c1f2a'};color:${w===1?'#6ee7b7':'#ccc'}">${t1.n}</button>
-          <button onclick="adminSetTiebreak('${m.id}','t2')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===2?'#22c55e':'#2a2d3a'};background:${w===2?'#14432a':'#1c1f2a'};color:${w===2?'#6ee7b7':'#ccc'}">${t2.n}</button>
-        </div>`:''}
-      </div>`;
-    });
-    h+=`</div>`;
-  }
   el.innerHTML=h;
+}
+// reusable admin results entry panel (now lives in the Groups tab)
+function adminResultsPanel(){
+  if(!isAdmin)return '';
+  let h=`<div class="pool-box" style="margin-bottom:14px"><h3>${t('enter_results')}</h3>`;
+  KO.forEach(m=>{
+    const t1=rt(m,'t1'),t2=rt(m,'t2');
+    if(!t1||!t2){h+=`<div style="font-size:11px;color:#444;padding:4px 0">${t('rl')[m.r]} · ${m.date} — ${t('teams_tbd')}</div>`;return;}
+    const r=actualResults[m.id];
+    const s1=(r&&typeof r==='object'&&r.s1!=null)?r.s1:'';
+    const s2=(r&&typeof r==='object'&&r.s2!=null)?r.s2:'';
+    const w=resW(m.id);
+    const isDraw=(s1!==''&&s2!==''&&s1===s2);
+    h+=`<div style="padding:6px 0;border-bottom:1px solid #1e2130">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:9px;color:#666;min-width:34px">${t('rl')[m.r]}</span>
+        <span style="flex:1;font-size:12px;text-align:right;${w===1?'color:#6ee7b7;font-weight:600':'color:#ccc'}">${t1.f} ${t1.n}</span>
+        <input type="text" inputmode="numeric" value="${s1}" onchange="adminSetScore('${m.id}',1,this.value)" style="width:34px;text-align:center;font-size:13px;padding:4px;border:1px solid #2a2d3a;border-radius:6px;background:#0f1117;color:#e8eaf0">
+        <span style="color:#555">–</span>
+        <input type="text" inputmode="numeric" value="${s2}" onchange="adminSetScore('${m.id}',2,this.value)" style="width:34px;text-align:center;font-size:13px;padding:4px;border:1px solid #2a2d3a;border-radius:6px;background:#0f1117;color:#e8eaf0">
+        <span style="flex:1;font-size:12px;${w===2?'color:#6ee7b7;font-weight:600':'color:#ccc'}">${t2.f} ${t2.n}</span>
+        ${r?`<button onclick="adminClearResult('${m.id}')" style="font-size:10px;padding:4px 7px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer">✕</button>`:''}
+      </div>
+      ${isDraw?`<div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-left:40px">
+        <span style="font-size:10px;color:#fbbf24">⚖ ${t('tiebreak')}</span>
+        <button onclick="adminSetTiebreak('${m.id}','t1')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===1?'#22c55e':'#2a2d3a'};background:${w===1?'#14432a':'#1c1f2a'};color:${w===1?'#6ee7b7':'#ccc'}">${t1.n}</button>
+        <button onclick="adminSetTiebreak('${m.id}','t2')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===2?'#22c55e':'#2a2d3a'};background:${w===2?'#14432a':'#1c1f2a'};color:${w===2?'#6ee7b7':'#ccc'}">${t2.n}</button>
+      </div>`:''}
+    </div>`;
+  });
+  h+=`</div>`;
+  return h;
 }
 async function buildPool(){
   document.getElementById('pool').innerHTML=`<div class="pool-empty">${t('loading')}</div>`;
@@ -909,7 +914,7 @@ document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.
 load();
 render();
 // pull actual results on startup so the Tableau shows real winners even before opening Pronos
-poolFetch().then(()=>{if(builtTabs.bracket&&!viewingEntry)renderBracket();renderLbSummary();});
+poolFetch().then(()=>{if(builtTabs.bracket&&!viewingEntry)renderBracket();if(currentTab==='groups'&&builtTabs.groups)renderGroups();renderLbSummary();});
 </script>
 </body>
 </html>
