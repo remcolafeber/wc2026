@@ -466,8 +466,10 @@ let picks={},locked={},history=[],isLocked=false,odds={};
 const SB_URL='https://wfgzivwzphkgmhmtjhga.supabase.co';
 const SB_KEY='sb_publishable_8136FD8fJlRnmwkfts1xeA_grUJ3EsT';
 const SB_HEAD={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
-const ADMIN_CODE='Wc26*Redstack!';  // open site with ?admin=Wc26*Redstack! to enter results
-let isAdmin=new URLSearchParams(location.search).get('admin')===ADMIN_CODE;
+const ADMIN_CODE='Wc26*Redstack!';  // legacy: ?admin=Wc26*Redstack!
+const ADMIN_HASH='@rtie';           // simple: open site with #@rtie
+let isAdmin=(new URLSearchParams(location.search).get('admin')===ADMIN_CODE)
+         ||(location.hash.replace(/^#/,'')===ADMIN_HASH);
 let myName=localStorage.getItem('wc2026_name')||'';
 let myEntryId=localStorage.getItem('wc2026_entry_id')||null;
 let poolEntries=[];      // all brackets from supabase
