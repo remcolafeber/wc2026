@@ -172,6 +172,22 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .res-t.rw{color:#6ee7b7;font-weight:600}
 .res-sc{font-weight:700;color:#e8eaf0;min-width:36px;text-align:center;flex-shrink:0}
 .res-sc.tbd{color:#555;font-weight:400;font-size:10px}
+.an-stats{display:flex;gap:10px;margin-bottom:10px}
+.an-stat{flex:1;background:#0f1117;border:1px solid #2a2d3a;border-radius:8px;padding:8px;text-align:center}
+.an-num{font-size:22px;font-weight:700;color:#6ee7b7}
+.an-lbl{font-size:10px;color:#888;margin-top:2px}
+.an-sec{font-size:11px;font-weight:600;color:#fbbf24;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px}
+.an-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px}
+.an-row-n{min-width:90px;flex-shrink:0}
+.an-bar-wrap{flex:1;height:8px;background:#0f1117;border-radius:4px;overflow:hidden}
+.an-bar{display:block;height:100%;background:#2563eb}
+.an-pct{font-size:11px;color:#888;min-width:32px;text-align:right}
+.an-split-row{display:flex;align-items:center;gap:5px;padding:3px 0;font-size:10px;border-bottom:1px solid #232633}
+.an-split-r{color:#666;min-width:26px;flex-shrink:0}
+.an-split-t{flex:1;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-split-bar{display:flex;width:60px;height:7px;border-radius:4px;overflow:hidden;flex-shrink:0}
+.an-split-bar span{display:block;height:100%}
+.an-split-pct{min-width:38px;text-align:right;color:#888;flex-shrink:0}
 .scoring-box .sc-sub{font-size:11px;color:#888;margin:-2px 0 8px}
 .sc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px solid #232633}
 .sc-rd{color:#ccc}
@@ -392,7 +408,7 @@ const I18N={
     pool_hint:"Fill the Bracket tab first, then submit here. You can re-submit to update.",
     msg_name:"Please enter your name.", msg_saving:"Saving…", msg_saved:"✓ Bracket submitted!", msg_err:"Could not save — check your connection.",
     leaderboard:"Leaderboard", pool_entries:"Pool entries", no_entries:"No entries yet. Be the first!",
-    scoring:"Scoring", per_correct:"per correct pick", total_avail:"Total available", res_matches:"Match Results", res_groupstage:"Group Stage", res_knockout:"Knockout", res_tbd:"TBD", res_standings:"Standings",
+    scoring:"Scoring", per_correct:"per correct pick", total_avail:"Total available", res_matches:"Match Results", res_groupstage:"Group Stage", res_knockout:"Knockout", res_tbd:"TBD", res_standings:"Standings", an_title:"Pool Analytics", an_entries:"Entries", an_completed:"Completed brackets", an_champ:"Most-picked champion", an_finalists:"Most-picked finalists", an_split:"Pick split by match", an_nodata:"No entries yet.",
     you:"YOU", view:"view ›", tap_view:"tap to view ›", full_ranking:n=>`Full ranking (${n}) ›`,
     admin_banner:n=>`🔑 Admin mode — tap the real winner of each match. ${n} entered.`,
     enter_results:"Enter actual results", teams_tbd:"teams TBD", tiebreak:"Winner (pens):",
@@ -416,7 +432,7 @@ const I18N={
     pool_hint:"Remplissez d'abord l'onglet Tableau, puis soumettez ici. Vous pouvez re-soumettre pour mettre à jour.",
     msg_name:"Veuillez saisir votre nom.", msg_saving:"Enregistrement…", msg_saved:"✓ Prono enregistré !", msg_err:"Échec de l'enregistrement — vérifiez votre connexion.",
     leaderboard:"Classement", pool_entries:"Pronos soumis", no_entries:"Aucun prono pour l'instant. Soyez le premier !",
-    scoring:"Barème", per_correct:"par bon pronostic", total_avail:"Total disponible", res_matches:"Résultats des matchs", res_groupstage:"Phase de groupes", res_knockout:"Phase finale", res_tbd:"À venir", res_standings:"Classements",
+    scoring:"Barème", per_correct:"par bon pronostic", total_avail:"Total disponible", res_matches:"Résultats des matchs", res_groupstage:"Phase de groupes", res_knockout:"Phase finale", res_tbd:"À venir", res_standings:"Classements", an_title:"Analytique du pool", an_entries:"Participations", an_completed:"Tableaux complétés", an_champ:"Champion le plus choisi", an_finalists:"Finalistes les plus choisis", an_split:"Répartition des choix par match", an_nodata:"Aucune participation.",
     you:"VOUS", view:"voir ›", tap_view:"toucher pour voir ›", full_ranking:n=>`Classement complet (${n}) ›`,
     admin_banner:n=>`🔑 Mode admin — touchez le vrai vainqueur de chaque match. ${n} saisi(s).`,
     enter_results:"Saisir les résultats réels", teams_tbd:"équipes à venir", tiebreak:"Vainqueur (tirs au but) :",
@@ -440,7 +456,7 @@ const I18N={
     pool_hint:"Vul eerst het Schema in, dien dan hier in. Je kunt opnieuw indienen om bij te werken.",
     msg_name:"Voer je naam in.", msg_saving:"Opslaan…", msg_saved:"✓ Voorspelling ingediend!", msg_err:"Opslaan mislukt — controleer je verbinding.",
     leaderboard:"Klassement", pool_entries:"Inzendingen", no_entries:"Nog geen inzendingen. Wees de eerste!",
-    scoring:"Puntentelling", per_correct:"per juiste keuze", total_avail:"Totaal beschikbaar", res_matches:"Wedstrijduitslagen", res_groupstage:"Groepsfase", res_knockout:"Knock-out", res_tbd:"Nog te spelen", res_standings:"Standen",
+    scoring:"Puntentelling", per_correct:"per juiste keuze", total_avail:"Totaal beschikbaar", res_matches:"Wedstrijduitslagen", res_groupstage:"Groepsfase", res_knockout:"Knock-out", res_tbd:"Nog te spelen", res_standings:"Standen", an_title:"Pool-analyse", an_entries:"Deelnames", an_completed:"Voltooide schema's", an_champ:"Meest gekozen kampioen", an_finalists:"Meest gekozen finalisten", an_split:"Keuzeverdeling per wedstrijd", an_nodata:"Nog geen deelnames.",
     you:"JIJ", view:"bekijk ›", tap_view:"tik om te bekijken ›", full_ranking:n=>`Volledig klassement (${n}) ›`,
     admin_banner:n=>`🔑 Adminmodus — tik op de echte winnaar van elke wedstrijd. ${n} ingevoerd.`,
     enter_results:"Echte resultaten invoeren", teams_tbd:"teams nog onbekend", tiebreak:"Winnaar (penalty's):",
@@ -622,7 +638,8 @@ function resultsList(){
   return h;
 }
 function renderGroups(){
-  let h=adminResultsPanel();
+  let h=analyticsPanel();
+  h+=adminResultsPanel();
   h+=resultsList();
   h+='<div class="groups-grid">';
   Object.entries(GRP).forEach(([g,d])=>{
@@ -833,6 +850,52 @@ function renderPool(){
   el.innerHTML=h;
 }
 // reusable admin results entry panel (now lives in the Groups tab)
+// admin-only pool analytics: entries, completion, crowd favorites, per-match split
+function analyticsPanel(){
+  if(!isAdmin)return '';
+  const N=poolEntries.length;
+  let h=`<div class="pool-box" style="margin-bottom:14px"><h3>📈 ${t('an_title')}</h3>`;
+  if(!N){h+=`<div class="pool-empty">${t('an_nodata')}</div></div>`;return h;}
+  // completed = has a champion pick (FINAL decided)
+  const completed=poolEntries.filter(e=>e.picks&&e.picks['FINAL']).length;
+  h+=`<div class="an-stats"><div class="an-stat"><div class="an-num">${N}</div><div class="an-lbl">${t('an_entries')}</div></div><div class="an-stat"><div class="an-num">${completed}</div><div class="an-lbl">${t('an_completed')}</div></div></div>`;
+  // helper: tally winner of a given match id across entries -> team name counts
+  function tally(mid){
+    const c={};
+    poolEntries.forEach(e=>{
+      const p=e.picks&&e.picks[mid];if(!p)return;
+      const mm=fm(mid);if(!mm)return;
+      const team=(p===1?rt(mm,'t1'):rt(mm,'t2'));if(!team)return;
+      const key=team.f+' '+team.n;c[key]=(c[key]||0)+1;
+    });
+    return Object.entries(c).sort((a,b)=>b[1]-a[1]);
+  }
+  // most-picked champion (winner of FINAL)
+  const champs=tally('FINAL');
+  if(champs.length){
+    h+=`<div class="an-sec">🏆 ${t('an_champ')}</div>`;
+    champs.slice(0,3).forEach(([name,n])=>{const pct=Math.round(n/N*100);h+=`<div class="an-row"><span class="an-row-n">${name}</span><span class="an-bar-wrap"><span class="an-bar" style="width:${pct}%"></span></span><span class="an-pct">${pct}%</span></div>`;});
+  }
+  // most-picked finalists (winners of the two SF: W101, W102)
+  const finalists={};
+  ['W101','W102'].forEach(mid=>{tally(mid).forEach(([name,n])=>{finalists[name]=(finalists[name]||0)+n;});});
+  const fl=Object.entries(finalists).sort((a,b)=>b[1]-a[1]);
+  if(fl.length){
+    h+=`<div class="an-sec">🥈 ${t('an_finalists')}</div>`;
+    fl.slice(0,4).forEach(([name,n])=>{const pct=Math.round(n/N*100);h+=`<div class="an-row"><span class="an-row-n">${name}</span><span class="an-bar-wrap"><span class="an-bar" style="width:${pct}%"></span></span><span class="an-pct">${pct}%</span></div>`;});
+  }
+  // per-match pick split — knockout matches with known teams
+  h+=`<div class="an-sec">📊 ${t('an_split')}</div>`;
+  [...KO].sort((a,b)=>a.sk.localeCompare(b.sk)).forEach(m=>{
+    const t1=rt(m,'t1'),t2=rt(m,'t2');if(!t1||!t2)return;
+    let c1=0,c2=0;poolEntries.forEach(e=>{const p=e.picks&&e.picks[m.id];if(p===1)c1++;else if(p===2)c2++;});
+    const tot=c1+c2;if(!tot)return;
+    const p1=Math.round(c1/tot*100),p2=100-p1;
+    h+=`<div class="an-split-row"><span class="an-split-r">${t('rl')[m.r]||m.r}</span><span class="an-split-t" style="text-align:right">${t1.n}</span><span class="an-split-bar"><span style="width:${p1}%;background:#2563eb"></span><span style="width:${p2}%;background:#7c3aed"></span></span><span class="an-split-t">${t2.n}</span><span class="an-split-pct">${p1}/${p2}</span></div>`;
+  });
+  h+=`</div>`;
+  return h;
+}
 function adminResultsPanel(){
   if(!isAdmin)return '';
   let h=`<div class="pool-box" style="margin-bottom:14px"><h3>${t('enter_results')}</h3>`;
@@ -943,5 +1006,7 @@ render();
 // pull actual results on startup so the Tableau shows real winners even before opening Pronos
 poolFetch().then(()=>{if(builtTabs.bracket&&!viewingEntry)renderBracket();if(currentTab==='groups'&&builtTabs.groups)renderGroups();renderLbSummary();});
 </script>
+<!-- Traffic analytics (GoatCounter) -->
+<script data-goatcounter="https://wc2026redstack.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
