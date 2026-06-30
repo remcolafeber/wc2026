@@ -44,6 +44,8 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .flag{font-size:13px;flex-shrink:0;line-height:1}
 .tname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tname.strike-name{text-decoration:line-through;text-decoration-color:#f87171;color:#888}
+.pred-wrong{font-size:9px;color:#f87171;text-decoration:line-through;text-decoration-color:#f87171;margin-left:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0}
+.pen-badge{font-size:8px;font-weight:700;color:#fbbf24;background:#3a2e0a;border:1px solid #5a4a10;border-radius:3px;padding:0 3px;margin-left:2px;flex-shrink:0;text-transform:uppercase}
 .team.played{cursor:default}
 .lk{font-size:9px;flex-shrink:0}
 .team.real-win{box-shadow:inset 3px 0 0 #22c55e}
@@ -146,6 +148,9 @@ h1{font-size:20px;font-weight:600;text-align:center;margin:8px 0 2px;color:#fff}
 .lb-rank.top{color:#fbbf24}
 .lb-name{flex:1;font-size:14px;font-weight:500}
 .lb-pts{font-size:15px;font-weight:700;color:#6ee7b7}
+.lb-score{text-align:right;display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}
+.lb-pct{font-size:16px;font-weight:700;color:#6ee7b7;line-height:1.1}
+.lb-raw{font-size:10px;color:#888}
 .lb-pts-lbl{font-size:9px;color:#666;text-transform:uppercase}
 .pool-empty{text-align:center;color:#666;font-size:13px;padding:18px}
 .admin-banner{background:#3d2410;border:1px solid #92560f;border-radius:8px;padding:8px 11px;margin-bottom:12px;font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:6px}
@@ -413,7 +418,7 @@ const I18N={
     scoring:"Scoring", per_correct:"per correct pick", total_avail:"Total available", res_matches:"Match Results", res_groupstage:"Group Stage", res_knockout:"Knockout", res_tbd:"TBD", res_standings:"Standings", an_title:"Pool Analytics", an_entries:"Entries", an_completed:"Completed brackets", an_champ:"Most-picked champion", an_finalists:"Most-picked finalists", an_split:"Pick split by match", an_nodata:"No entries yet.",
     you:"YOU", view:"view ›", tap_view:"tap to view ›", full_ranking:n=>`Full ranking (${n}) ›`,
     admin_banner:n=>`🔑 Admin mode — tap the real winner of each match. ${n} entered.`,
-    enter_results:"Enter actual results", teams_tbd:"teams TBD", tiebreak:"Winner (pens):",
+    enter_results:"Enter actual results", teams_tbd:"teams TBD", tiebreak:"Won on penalties:", won_pens:"won on pens",
     viewing:name=>`👁 ${name}'s bracket (read-only)`, back_mine:"Back to mine",
     loading:"Loading…", del_confirm:name=>`Delete "${name}"'s entry? This is permanent.`, del_err:"Delete failed — check your connection."
   },
@@ -437,7 +442,7 @@ const I18N={
     scoring:"Barème", per_correct:"par bon pronostic", total_avail:"Total disponible", res_matches:"Résultats des matchs", res_groupstage:"Phase de groupes", res_knockout:"Phase finale", res_tbd:"À venir", res_standings:"Classements", an_title:"Analytique du pool", an_entries:"Participations", an_completed:"Tableaux complétés", an_champ:"Champion le plus choisi", an_finalists:"Finalistes les plus choisis", an_split:"Répartition des choix par match", an_nodata:"Aucune participation.",
     you:"VOUS", view:"voir ›", tap_view:"toucher pour voir ›", full_ranking:n=>`Classement complet (${n}) ›`,
     admin_banner:n=>`🔑 Mode admin — touchez le vrai vainqueur de chaque match. ${n} saisi(s).`,
-    enter_results:"Saisir les résultats réels", teams_tbd:"équipes à venir", tiebreak:"Vainqueur (tirs au but) :",
+    enter_results:"Saisir les résultats réels", teams_tbd:"équipes à venir", tiebreak:"Vainqueur aux t.a.b. :", won_pens:"aux t.a.b.",
     viewing:name=>`👁 Prono de ${name} (lecture seule)`, back_mine:"Retour au mien",
     loading:"Chargement…", del_confirm:name=>`Supprimer le prono de "${name}" ? Cette action est définitive.`, del_err:"Échec de la suppression — vérifiez votre connexion."
   },
@@ -461,7 +466,7 @@ const I18N={
     scoring:"Puntentelling", per_correct:"per juiste keuze", total_avail:"Totaal beschikbaar", res_matches:"Wedstrijduitslagen", res_groupstage:"Groepsfase", res_knockout:"Knock-out", res_tbd:"Nog te spelen", res_standings:"Standen", an_title:"Pool-analyse", an_entries:"Deelnames", an_completed:"Voltooide schema's", an_champ:"Meest gekozen kampioen", an_finalists:"Meest gekozen finalisten", an_split:"Keuzeverdeling per wedstrijd", an_nodata:"Nog geen deelnames.",
     you:"JIJ", view:"bekijk ›", tap_view:"tik om te bekijken ›", full_ranking:n=>`Volledig klassement (${n}) ›`,
     admin_banner:n=>`🔑 Adminmodus — tik op de echte winnaar van elke wedstrijd. ${n} ingevoerd.`,
-    enter_results:"Echte resultaten invoeren", teams_tbd:"teams nog onbekend", tiebreak:"Winnaar (penalty's):",
+    enter_results:"Echte resultaten invoeren", teams_tbd:"teams nog onbekend", tiebreak:"Winnaar na penalty's:", won_pens:"na penalty's",
     viewing:name=>`👁 Voorspelling van ${name} (alleen lezen)`, back_mine:"Terug naar de mijne",
     loading:"Laden…", del_confirm:name=>`Inzending van "${name}" verwijderen? Dit is permanent.`, del_err:"Verwijderen mislukt — controleer je verbinding."
   }
@@ -472,13 +477,16 @@ function resW(mid){const r=actualResults[mid];if(r==null)return null;return (typ
 function resScore(mid){const r=actualResults[mid];if(r==null||typeof r==='number')return null;if(r.s1==null||r.s2==null)return null;return r.s1+'–'+r.s2;}
 function hasRes(mid){return resW(mid)!=null;}
 // has a match kicked off yet? sk is "YYYYMMDDHHMM" in CEST (UTC+2, June/July). Compare in UTC.
-function hasKickedOff(mid){
-  const m=fm(mid);if(!m||!m.sk)return false;
+// kickoff time of a match in UTC ms (sk is "YYYYMMDDHHMM" in CEST = UTC+2)
+function koUTCms(mid){
+  const m=fm(mid);if(!m||!m.sk)return null;
   const s=m.sk;
   const y=+s.slice(0,4),mo=+s.slice(4,6),d=+s.slice(6,8),hh=+s.slice(8,10),mm=+s.slice(10,12);
-  // CEST = UTC+2 → kickoff in UTC ms
-  const koUTC=Date.UTC(y,mo-1,d,hh-2,mm);
-  return Date.now()>=koUTC;
+  return Date.UTC(y,mo-1,d,hh-2,mm);
+}
+function hasKickedOff(mid){
+  const ko=koUTCms(mid);if(ko==null)return false;
+  return Date.now()>=ko;
 }
 // a match's winner pick is locked if it already has a result OR it has kicked off
 function pickLocked(mid){return resW(mid)!=null||hasKickedOff(mid);}
@@ -555,6 +563,27 @@ function rtReal(m,slot){
   return getWReal(pid)||null;
 }
 function isML(id){return isLocked&&locked[id];}
+// Hybrid slot resolver for the bracket: shows the REAL team that advanced where a result exists,
+// otherwise the player's predicted team. Flags when the real winner differs from the player's pick.
+// Returns {team, predTeam, diverged}.
+function rtShow(m,slot){
+  if(m[slot])return {team:m[slot],predTeam:null,diverged:false}; // fixed base-match team (R32)
+  const pid=slot==='t1'?m.p1:m.p2;if(!pid)return {team:null,predTeam:null,diverged:false};
+  // Loser-feeds (3rd place game): handle via real result if available, else prediction
+  if(pid.startsWith('L_')){
+    const realT=rtReal(m,slot), predT=rt(m,slot);
+    if(realT)return {team:realT,predTeam:(predT&&predT.n!==realT.n)?predT:null,diverged:!!(predT&&predT.n!==realT.n)};
+    return {team:predT,predTeam:null,diverged:false};
+  }
+  // Normal feeder: pid is a previous match id
+  const realWinner=getWReal(pid);     // who actually advanced (null if no result yet)
+  const predWinner=getW(pid);         // who the player predicted to advance
+  if(realWinner){
+    const diverged=!!(predWinner&&predWinner.n!==realWinner.n);
+    return {team:realWinner,predTeam:diverged?predWinner:null,diverged};
+  }
+  return {team:predWinner||null,predTeam:null,diverged:false};
+}
 function pickW(id,slot){
   if(viewingEntry)return; // read-only while viewing another player
   if(pickLocked(id))return; // match kicked off or already decided — pick is locked
@@ -579,30 +608,46 @@ function doReset(){
   render();
 }
 function tEl(mid,slot){
-  const m=fm(mid),team=rt(m,slot),isW=picks[mid]===(slot==='t1'?1:2),ml=isML(mid),tbd=!team;
+  const m=fm(mid),ml=isML(mid);
   const slotNum=(slot==='t1'?1:2);
+  // resolve the team to SHOW: real advancer where known, else prediction
+  const show=rtShow(m,slot);
+  const team=show.team;
+  const tbd=!team;
+  const isW=picks[mid]===slotNum;  // player picked this slot to win THIS match
   const rw=resW(mid);
-  const realWin=rw===slotNum;     // actual winner of this match
-  const realLose=rw&&rw!==slotNum; // actual loser
-  const wrongPick=isW&&realLose;                  // picked this team but it lost
-  const rightPick=isW&&realWin;                   // picked this team and it won
+  const realWin=rw===slotNum;
+  const realLose=rw&&rw!==slotNum;
+  const wrongPick=isW&&realLose;
+  const rightPick=isW&&realWin;
   let cls='team'+(tbd?' tbd':'')+(isW?(ml?' locked-winner':' winner'):'')+(ml?' locked-team':'')+(realWin?' real-win':'')+(realLose?' real-lose':'')+(wrongPick?' wrong-pick':'')+(rightPick?' right-pick':'');
   const lk=ml&&isW?'<span class="lk">🔒</span>':'';
   // per-team goals if a detailed score exists
   const r=actualResults[mid];
   let gl='';
   if(r&&typeof r==='object'&&r.s1!=null&&r.s2!=null){const g=(slot==='t1'?r.s1:r.s2);gl=`<span class="tscore">${g}</span>`;}
-  // single small badge: only mark the USER's correctness (✓ right pick / ✗ wrong pick)
+  // penalty indicator on the shootout winner
+  let pen='';
+  if(r&&typeof r==='object'&&r.pen&&realWin)pen='<span class="pen-badge">pso</span>';
+  // badges: ✓ correct pick / ✗ wrong pick
   let badge='';
   if(rightPick)badge='<span class="rc ok">✓</span>';
   else if(wrongPick)badge='<span class="rc bad">✗</span>';
-  // name display: strike through the player's WRONG pick (the real winner is already shown
-  // highlighted in the other slot of this same match, so no need to repeat it here)
-  let nameHtml=`<span class="tname">${team?team.n:'—'}</span>`;
-  if(wrongPick){nameHtml=`<span class="tname strike-name">${team?team.n:'—'}</span>`;}
+  // name display:
+  // (a) derived slot where real advancer differs from the player's predicted advancer
+  //     → show real team, with predicted team struck through beside it
+  // (b) within a played base match, the player's wrong pick is struck through
+  let nameHtml;
+  if(show.diverged&&show.predTeam){
+    nameHtml=`<span class="tname">${team.n}</span><span class="pred-wrong">${show.predTeam.n}</span>`;
+  }else if(wrongPick){
+    nameHtml=`<span class="tname strike-name">${team?team.n:'—'}</span>`;
+  }else{
+    nameHtml=`<span class="tname">${team?team.n:'—'}</span>`;
+  }
   const played=pickLocked(mid);
   const oc=(!tbd&&!ml&&!played&&!viewingEntry)?`onclick="pickW('${mid}','${slot}')"` :'';
-  return `<div class="${cls}${played?' played':''}" ${oc}><span class="flag">${team?team.f:''}</span>${nameHtml}${lk}${badge}${gl}</div>`;
+  return `<div class="${cls}${played?' played':''}" ${oc}><span class="flag">${team?team.f:''}</span>${nameHtml}${lk}${badge}${pen}${gl}</div>`;
 }
 function mcard(id){const m=fm(id);const o=odds[id]||{};const oh=`<div class="bracket-odds"><span class="${o['1']?'':'empty'}">${o['1']||'–'}</span><span class="${o['X']?'':'empty'}">${o['X']||'–'}</span><span class="${o['2']?'':'empty'}">${o['2']||'–'}</span></div>`;const lockIcon=(pickLocked(id)&&resW(id)==null)?' 🔒':'';return `<div class="match-wrap"><div class="match-info">${m.cet} CET · ${m.date.split(' ').slice(1).join(' ')}${lockIcon}<br>${m.venue||''}</div><div class="match">${tEl(id,'t1')}${tEl(id,'t2')}</div>${oh}</div>`;}
 function renderBracket(){
@@ -758,6 +803,31 @@ function scoreEntry(entryPicks){
   });
   return pts;
 }
+// points that were AVAILABLE to a player who joined at joinMs:
+// sum of round-weights for matches that (a) have a result now, AND
+// (b) had NOT yet kicked off when the player joined (i.e. were pickable).
+function availablePoints(joinMs){
+  let avail=0;
+  KO.forEach(m=>{
+    if(resW(m.id)==null)return;        // only decided matches count
+    const ko=koUTCms(m.id);
+    if(ko==null)return;
+    if(joinMs!=null&&joinMs>=ko)return; // match had already kicked off when they joined → not available
+    avail+=(PTS[m.r]||1);
+  });
+  return avail;
+}
+// parse an entry's join time (Supabase created_at) to ms; null if unknown
+function entryJoinMs(e){
+  if(e&&e.created_at){const t=Date.parse(e.created_at);if(!isNaN(t))return t;}
+  return null;
+}
+// percentage score: earned / available (0 if nothing available yet)
+function scorePct(e){
+  const earned=scoreEntry(e.picks||{});
+  const avail=availablePoints(entryJoinMs(e));
+  return avail>0?(earned/avail):0;
+}
 function resultsCount(){return KO.filter(m=>resW(m.id)!=null).length;}
 
 // ── POOL: admin results entry ──
@@ -775,8 +845,9 @@ async function adminSetScore(mid,which,val){
   if(which===1)r.s1=n;else r.s2=n;
   // auto-derive winner when decisive
   if(r.s1!=null&&r.s2!=null){
-    if(r.s1>r.s2)r.w=1;else if(r.s2>r.s1)r.w=2;
-    // if equal, leave r.w as-is (tiebreak handled by adminSetTiebreak)
+    if(r.s1>r.s2){r.w=1;r.pen=false;}
+    else if(r.s2>r.s1){r.w=2;r.pen=false;}
+    // if equal, leave r.w as-is (decided via penalty picker)
   }
   actualResults[mid]=r;
   await saveResults();
@@ -784,7 +855,9 @@ async function adminSetScore(mid,which,val){
 }
 async function adminSetTiebreak(mid,slot){
   let r=actualResults[mid];if(!r||typeof r==='number')r={s1:null,s2:null,w:null};
-  r.w=(slot==='t1'?1:2);actualResults[mid]=r;
+  r.w=(slot==='t1'?1:2);
+  r.pen=true;  // drawn in regulation/ET, decided on penalties
+  actualResults[mid]=r;
   await saveResults();
   refreshAfterResult();
 }
@@ -859,14 +932,15 @@ function renderPool(){
   if(!poolEntries.length){
     h+=`<div class="pool-empty">${t('no_entries')}</div>`;
   }else{
-    const ranked=poolEntries.map(e=>({...e,pts:scoreEntry(e.picks||{})}))
-      .sort((a,b)=>hasResults?(b.pts-a.pts):0);
+    const ranked=poolEntries.map(e=>({...e,pts:scoreEntry(e.picks||{}),avail:availablePoints(entryJoinMs(e)),pct:scorePct(e)}))
+      .sort((a,b)=>hasResults?(b.pct-a.pct||b.pts-a.pts):0);
     ranked.forEach((e,i)=>{
       const isMe=e.id===myEntryId;
+      const pctTxt=e.avail>0?Math.round(e.pct*100)+'%':'—';
       h+=`<div class="lb-row" onclick="viewEntry('${e.id}')">
         ${hasResults?`<span class="lb-rank ${i<3?'top':''}">${i+1}</span>`:`<span class="lb-rank">•</span>`}
         <span class="lb-name">${e.name}${isMe?' <span class="you-badge">'+t('you')+'</span>':''}</span>
-        ${hasResults?`<span style="text-align:right"><div class="lb-pts">${e.pts}</div><div class="lb-pts-lbl">pts</div></span>`:`<span style="font-size:11px;color:#666">${t('tap_view')}</span>`}
+        ${hasResults?`<span class="lb-score"><span class="lb-pct">${pctTxt}</span><span class="lb-raw">${e.pts}/${e.avail} pts</span></span>`:`<span style="font-size:11px;color:#666">${t('tap_view')}</span>`}
         ${isAdmin?`<button onclick="event.stopPropagation();adminDeleteEntry('${e.id}','${(e.name||'').replace(/'/g,"\\'")}')" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer;margin-left:4px">✕</button>`:''}
       </div>`;
     });
@@ -945,9 +1019,10 @@ function adminResultsPanel(){
         ${r?`<button onclick="adminClearResult('${m.id}')" style="font-size:10px;padding:4px 7px;border-radius:6px;border:1px solid #7f2020;background:transparent;color:#f87171;cursor:pointer">✕</button>`:''}
       </div>
       ${isDraw?`<div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-left:40px">
-        <span style="font-size:10px;color:#fbbf24">⚖ ${t('tiebreak')}</span>
+        <span style="font-size:10px;color:#fbbf24">⚽ ${t('tiebreak')}</span>
         <button onclick="adminSetTiebreak('${m.id}','t1')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===1?'#22c55e':'#2a2d3a'};background:${w===1?'#14432a':'#1c1f2a'};color:${w===1?'#6ee7b7':'#ccc'}">${t1.n}</button>
         <button onclick="adminSetTiebreak('${m.id}','t2')" style="font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid ${w===2?'#22c55e':'#2a2d3a'};background:${w===2?'#14432a':'#1c1f2a'};color:${w===2?'#6ee7b7':'#ccc'}">${t2.n}</button>
+        ${(r&&r.pen&&w)?`<span style="font-size:9px;color:#fbbf24">✓ ${(w===1?t1.n:t2.n)} ${t('won_pens')}</span>`:''}
       </div>`:''}
     </div>`;
   });
@@ -971,19 +1046,21 @@ function scoringBox(){
 function renderLbSummary(){
   const el=document.getElementById('lb-summary');if(!el)return;
   if(!poolEntries.length||resultsCount()===0){el.innerHTML='';return;}
-  const ranked=poolEntries.map(e=>({...e,pts:scoreEntry(e.picks||{})})).sort((a,b)=>b.pts-a.pts);
+  const ranked=poolEntries.map(e=>({...e,pts:scoreEntry(e.picks||{}),avail:availablePoints(entryJoinMs(e)),pct:scorePct(e)})).sort((a,b)=>b.pct-a.pct||b.pts-a.pts);
   let rows='';
   const top=ranked.slice(0,5);
   top.forEach((e,i)=>{
     const isMe=e.id===myEntryId;
-    rows+=`<div class="lb-sum-row" onclick="viewEntry('${e.id}')"><span class="lb-sum-rank ${i<3?'top':''}">${i+1}</span><span class="lb-sum-name">${e.name}${isMe?' <span class="you-badge">'+t('you')+'</span>':''}</span><span class="lb-sum-pts">${e.pts} pts</span><span class="lb-sum-go">${t('view')}</span></div>`;
+    const pctTxt=e.avail>0?Math.round(e.pct*100)+'%':'—';
+    rows+=`<div class="lb-sum-row" onclick="viewEntry('${e.id}')"><span class="lb-sum-rank ${i<3?'top':''}">${i+1}</span><span class="lb-sum-name">${e.name}${isMe?' <span class="you-badge">'+t('you')+'</span>':''}</span><span class="lb-sum-pts">${pctTxt} <span style="color:#666;font-weight:400">(${e.pts}/${e.avail})</span></span><span class="lb-sum-go">${t('view')}</span></div>`;
   });
   // if I have an entry but I'm outside the top 5, append my own row
   if(myEntryId){
     const myRank=ranked.findIndex(e=>e.id===myEntryId);
     if(myRank>=5){
       const e=ranked[myRank];
-      rows+=`<div class="lb-sum-row" style="border-top:2px solid #2a2d3a" onclick="viewEntry('${e.id}')"><span class="lb-sum-rank">${myRank+1}</span><span class="lb-sum-name">${e.name} <span class="you-badge">${t('you')}</span></span><span class="lb-sum-pts">${e.pts} pts</span><span class="lb-sum-go">${t('view')}</span></div>`;
+      const pctTxt=e.avail>0?Math.round(e.pct*100)+'%':'—';
+      rows+=`<div class="lb-sum-row" style="border-top:2px solid #2a2d3a" onclick="viewEntry('${e.id}')"><span class="lb-sum-rank">${myRank+1}</span><span class="lb-sum-name">${e.name} <span class="you-badge">${t('you')}</span></span><span class="lb-sum-pts">${pctTxt} <span style="color:#666;font-weight:400">(${e.pts}/${e.avail})</span></span><span class="lb-sum-go">${t('view')}</span></div>`;
     }
   }
   const more=ranked.length>5?`<div class="lb-sum-link" onclick="goPronos()">${t('full_ranking')(ranked.length)}</div>`:'';
